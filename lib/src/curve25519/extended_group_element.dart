@@ -94,21 +94,19 @@ class ExtendedGroupElement {
     return s;
   }
 
-  bool FromBytes(Uint8List s) {
-    var u = FieldElement();
-    var v = FieldElement();
+  void fromBytes(Uint8List s) {
     var v3 = FieldElement();
     var vxx = FieldElement();
     var check = FieldElement();
 
-    FeFromBytes(Y, s);
-    FeOne(Z);
-    FeSquare(u, Y);
-    FeMul(v, u, d);
-    FeSub(u, u, Z); // y = y^2-1
-    FeAdd(v, v, Z); // v = dy^2+1
+    FieldElement tY = FieldElement.fromBytes(s);
+    FieldElement tZ = FieldElement.one();
+    FieldElement u = tY.squared;
+    FieldElement v = u * d;
+    u = u - tZ; // y = y^2-1
+    v = v + tZ; // v = dy^2+1
 
-    FeSquare(v3, v);
+    FieldElement v3 = v.squared;
     FeMul(v3, v3, v); // v3 = v^3
     FeSquare(X, v3);
     FeMul(X, X, v);
