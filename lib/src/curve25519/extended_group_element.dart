@@ -3,6 +3,11 @@ import 'dart:typed_data';
 import 'package:ninja_ed25519/src/curve25519/field_element/constants.dart';
 import 'package:ninja_ed25519/src/curve25519/field_element/field_element.dart';
 
+abstract class CachableGroupElement {
+  CachedGroupElement get toCached;
+  // PreComputedGroupElement get toPreComputed;
+}
+
 /// Group elements are members of the elliptic curve -x^2 + y^2 = 1 + d * x^2 *
 /// y^2 where d = -121665/121666.
 ///
@@ -55,7 +60,7 @@ class ProjectiveGroupElement {
   }
 }
 
-class ExtendedGroupElement {
+class ExtendedGroupElement implements CachableGroupElement {
   FieldElement X;
   FieldElement Y;
   FieldElement Z;
@@ -68,6 +73,10 @@ class ExtendedGroupElement {
         Z = Z ?? FieldElement(),
         T = T ?? FieldElement();
 
+  factory ExtendedGroupElement.fromBytes(Uint8List bytes) {
+    return ExtendedGroupElement()..copyFromBytes(bytes);
+  }
+
   void zero() {
     X = FieldElement();
     Y = FieldElement.one();
@@ -77,6 +86,7 @@ class ExtendedGroupElement {
 
   CompletedGroupElement get twice => toProjective.twice;
 
+  @override
   CachedGroupElement get toCached =>
       CachedGroupElement(yPlusX: Y + X, yMinusX: Y - X, z: Z, t2d: T * d2);
 
@@ -94,11 +104,7 @@ class ExtendedGroupElement {
     return s;
   }
 
-  void fromBytes(Uint8List s) {
-    var v3 = FieldElement();
-    var vxx = FieldElement();
-    var check = FieldElement();
-
+  void copyFromBytes(Uint8List s) {
     FieldElement tY = FieldElement.fromBytes(s);
     FieldElement tZ = FieldElement.one();
     FieldElement u = tY.squared;
@@ -107,40 +113,70 @@ class ExtendedGroupElement {
     v = v + tZ; // v = dy^2+1
 
     FieldElement v3 = v.squared;
-    FeMul(v3, v3, v); // v3 = v^3
-    FeSquare(X, v3);
-    FeMul(X, X, v);
-    FeMul(X, X, u); // x = uv^7
+    v3 = v3 * v; // v3 = v^3
+    FieldElement tX = v3.squared;
+    tX = tX * v;
+    tX = tX * u; // x = uv^7
 
-    fePow22523(X, X); // x = (uv^7)^((q-5)/8)
-    FeMul(X, X, v3);
-    FeMul(X, X, u); // x = uv^3(uv^7)^((q-5)/8)
+    tX = tX.pow22523; // x = (uv^7)^((q-5)/8)
+    tX = tX * v3;
+    tX = tX * u; // x = uv^3(uv^7)^((q-5)/8)
 
-    var tmpX = Uint8List(32);
-    var tmp2 = Uint8List(32);
-
-    FeSquare(vxx, X);
-    FeMul(vxx, vxx, v);
-    FeSub(check, vxx, u); // vx^2-u
-    if (FeIsNonZero(check) == 1) {
-      FeAdd(check, vxx, u); // vx^2+u
-      if (FeIsNonZero(check) == 1) {
-        return false;
+    FieldElement vxx = tX.squared;
+    vxx = vxx * v;
+    FieldElement check = vxx - u; // vx^2-u
+    if (check.isNonZero) {
+      check = vxx + u; // vx^2+u
+      if (check.isNonZero) {
+        throw Exception('error converting bytes to ExtendedGroupElement');
       }
-      FeMul(X, X, SqrtM1);
-
-      FeToBytes(tmpX, X);
-      for (var i = 0; i < tmp2.length; i++) {
-        tmp2[31 - i] = tmp2[i];
-      }
+      tX = tX * sqrtM1;
     }
 
-    if (FeIsNegative(X) != (s[31] >> 7)) {
-      FeNeg(X, X);
+    if (tX.isNegative != (s[31] & 0x80 != 0)) {
+      tX = -tX;
     }
 
-    FeMul(T, X, Y);
-    return true;
+    X = tX;
+    Y = tY;
+    Z = tZ;
+    T = X * Y;
+  }
+
+  CompletedGroupElement operator +(CachableGroupElement other) {
+    final q = other.toCached;
+
+    final r = CompletedGroupElement();
+    r.X = Y + X;
+    r.Y = Y - X;
+    r.Z = r.X * q.yPlusX;
+    r.Y = r.Y * q.yMinusX;
+    r.T = q.t2d * T;
+    FieldElement t0 = Z * q.z;
+    t0 = t0 + t0;
+    r.X = r.Z - r.Y;
+    r.Y = r.Z + r.Y;
+    r.Z = t0 + r.T;
+    r.T = t0 - r.T;
+    return r;
+  }
+
+  CompletedGroupElement operator -(CachedGroupElement other) {
+    final q = other.toCached;
+
+    final r = CompletedGroupElement();
+    r.X = Y + X;
+    r.Y = Y - X;
+    r.Z = r.X * q.yMinusX;
+    r.Y = r.Y * q.yPlusX;
+    r.T = q.t2d * T;
+    r.X = Z * q.z;
+    FieldElement t0 = r.X + r.X;
+    r.X = r.Z - r.Y;
+    r.Y = r.Z + r.Y;
+    r.Z = t0 - r.T;
+    r.T = t0 + r.T;
+    return r;
   }
 }
 
@@ -182,7 +218,7 @@ class PreComputedGroupElement {
   }
 }
 
-class CachedGroupElement {
+class CachedGroupElement implements CachableGroupElement {
   FieldElement yPlusX;
   FieldElement yMinusX;
   FieldElement z;
@@ -197,4 +233,7 @@ class CachedGroupElement {
         yMinusX = yMinusX ?? FieldElement(),
         z = z ?? FieldElement(),
         t2d = t2d ?? FieldElement();
+
+  @override
+  CachedGroupElement get toCached => this;
 }

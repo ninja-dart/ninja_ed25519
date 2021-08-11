@@ -26,3 +26,17 @@ var d2 = FieldElement.fromList([
   29715968,
   9444199,
 ]);
+
+/// SqrtM1 is the square-root of -1 in the field.
+var sqrtM1 = FieldElement.fromList([
+  -32595792,
+  -7943725,
+  9377950,
+  3500415,
+  12389472,
+  -272473,
+  -25146209,
+  -2005654,
+  326686,
+  11406482,
+]);
