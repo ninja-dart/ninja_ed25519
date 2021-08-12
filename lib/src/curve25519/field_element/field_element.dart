@@ -120,12 +120,7 @@ class FieldElement {
   /// Can get away with 11 carries, but then data flow is much deeper.
   ///
   /// With tighter constraints on inputs, can squeeze carries into int32.
-  FieldElement operator *(final Object /* FieldElement | int */ g) {
-    if (g is int) {
-      return multiplyScalar(g);
-    } else if (g is! FieldElement) {
-      throw ArgumentError('should be integer or FieldElement');
-    }
+  FieldElement operator *(FieldElement g) {
     if (this == g) {
       return squared;
     }
@@ -274,14 +269,7 @@ class FieldElement {
     return h;
   }
 
-  /// calculates h = f*f.
-  ///
-  /// Preconditions:
-  ///    |f| bounded by 1.1*2^26,1.1*2^25,1.1*2^26,1.1*2^25,etc.
-  ///
-  /// Postconditions:
-  ///    |h| bounded by 1.1*2^25,1.1*2^24,1.1*2^25,1.1*2^24,etc.
-  FieldElement get squared {
+  List<int> get _square {
     var f0 = elements[0];
     var f1 = elements[1];
     var f2 = elements[2];
@@ -306,7 +294,7 @@ class FieldElement {
     var f8_19 = 19 * f8; // 1.31*2^30
     var f9_38 = 38 * f9; // 1.31*2^30
 
-    final h = FieldElement();
+    final h = List<int>.filled(10, 0, growable: false);
     h[0] = f0 * f0 +
         f1_2 * f9_38 +
         f2_2 * f8_19 +
@@ -342,8 +330,29 @@ class FieldElement {
         f4 * f4 +
         f9 * f9_38;
     h[9] = f0_2 * f9 + f1_2 * f8 + f2_2 * f7 + f3_2 * f6 + f4_2 * f5;
-    combine(h.elements);
     return h;
+  }
+
+  /// calculates h = f*f.
+  ///
+  /// Preconditions:
+  ///    |f| bounded by 1.1*2^26,1.1*2^25,1.1*2^26,1.1*2^25,etc.
+  ///
+  /// Postconditions:
+  ///    |h| bounded by 1.1*2^25,1.1*2^24,1.1*2^25,1.1*2^24,etc.
+  FieldElement get squared {
+    final h = _square;
+    combine(h);
+    return FieldElement.fromList(h);
+  }
+
+  FieldElement get squaredMultiply2 {
+    final h = _square;
+    for(int i = 0; i < h.length; i++) {
+      h[i] += h[i];
+    }
+    combine(h);
+    return FieldElement.fromList(h);
   }
 
   /// Marshals h to s.

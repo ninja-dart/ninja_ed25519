@@ -6,7 +6,11 @@ import 'package:ninja_ed25519/src/curve25519/extended.dart';
 import 'package:ninja_ed25519/src/curve25519/field_element/constants.dart';
 import 'package:ninja_ed25519/src/util/int.dart';
 
+const curve25519 = Curve25519();
+
 class Curve25519 {
+  const Curve25519();
+
   /// computes h = a*B, where
   ///   a = a[0]+256*a[1]+...+256^31 a[31]
   ///   B is the Ed25519 base point (x,4/5) with x positive.
@@ -64,7 +68,7 @@ class Curve25519 {
       return PreComputedGroupElement(
         yPlusX: t.yMinusX.clone,
         yMinusX: t.yPlusX.clone,
-        xy2d: t.xy2d.clone,
+        xy2d: -t.xy2d,
       );
     } else {
       return t;

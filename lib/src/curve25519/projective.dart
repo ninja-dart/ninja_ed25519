@@ -50,7 +50,7 @@ class ProjectiveGroupElement implements IPoint25519 {
       X: X.squared,
       Y: X + Y,
       Z: Y.squared,
-      T: Z.squared * 2,
+      T: Z.squaredMultiply2,
     );
     var t0 = r.Y.squared;
     r.Y = r.Z + r.X;
