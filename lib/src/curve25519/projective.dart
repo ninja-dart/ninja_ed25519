@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:ninja_ed25519/src/curve25519/completed.dart';
+import 'package:ninja_ed25519/src/curve25519/extended.dart';
 import 'package:ninja_ed25519/src/curve25519/field_element/field_element.dart';
 import 'package:ninja_ed25519/src/curve25519/point.dart';
 
@@ -12,15 +13,15 @@ import 'package:ninja_ed25519/src/curve25519/point.dart';
 ///   ExtendedGroupElement: (X:Y:Z:T) satisfying x=X/Z, y=Y/Z, XY=ZT
 ///   CompletedGroupElement: ((X:Z),(Y:T)) satisfying x=X/Z, y=Y/T
 ///   PreComputedGroupElement: (y+x,y-x,2dxy)
-class ProjectiveGroupElement {
+class ProjectiveGroupElement implements IPoint25519 {
   FieldElement X;
   FieldElement Y;
   FieldElement Z;
 
   ProjectiveGroupElement({FieldElement? X, FieldElement? Y, FieldElement? Z})
       : X = X ?? FieldElement(),
-        Y = Y ?? FieldElement(),
-        Z = Z ?? FieldElement();
+        Y = Y ?? FieldElement.one(),
+        Z = Z ?? FieldElement.one();
 
   factory ProjectiveGroupElement.fromBytes(Uint8List s) =>
       Point25519.fromBytes(s).toProjective;
@@ -31,10 +32,18 @@ class ProjectiveGroupElement {
     Z = FieldElement.one();
   }
 
+  @override
   Point25519 get toAffine {
     FieldElement recip = Z.inverted;
     return Point25519(x: X * recip, y: Y * recip);
   }
+
+  @override
+  ProjectiveGroupElement get toProjective => this;
+
+  @override
+  ExtendedGroupElement get toExtended =>
+      ExtendedGroupElement(X: X, Y: Y, Z: Z, T: X * Y * Z.inverted);
 
   CompletedGroupElement get twice {
     CompletedGroupElement r = CompletedGroupElement(
@@ -51,5 +60,6 @@ class ProjectiveGroupElement {
     return r;
   }
 
+  @override
   Uint8List get asBytes => toAffine.asBytes;
 }

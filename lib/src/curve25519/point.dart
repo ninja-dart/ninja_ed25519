@@ -5,12 +5,19 @@ import 'package:ninja_ed25519/src/curve25519/field_element/constants.dart';
 import 'package:ninja_ed25519/src/curve25519/field_element/field_element.dart';
 import 'package:ninja_ed25519/src/curve25519/projective.dart';
 
-class Point25519 {
+abstract class IPoint25519 {
+  Point25519 get toAffine;
+  ProjectiveGroupElement get toProjective;
+  ExtendedGroupElement get toExtended;
+  Uint8List get asBytes;
+}
+
+class Point25519 implements IPoint25519 {
   FieldElement x;
   FieldElement y;
   Point25519({FieldElement? x, FieldElement? y})
       : x = x ?? FieldElement(),
-        y = y ?? FieldElement();
+        y = y ?? FieldElement.one();
 
   factory Point25519.fromBytes(Uint8List s) {
     FieldElement tY = FieldElement.fromBytes(s);
@@ -52,15 +59,21 @@ class Point25519 {
     y = FieldElement.one();
   }
 
+  @override
+  Point25519 get toAffine => this;
+
+  @override
   ProjectiveGroupElement get toProjective => ProjectiveGroupElement(
         X: x,
         Y: y,
         Z: FieldElement.one(),
       );
 
+  @override
   ExtendedGroupElement get toExtended =>
       ExtendedGroupElement(X: x, Y: y, Z: FieldElement.one(), T: x * y);
 
+  @override
   Uint8List get asBytes {
     Uint8List s = y.asBytes;
     if (x.isNegative) {

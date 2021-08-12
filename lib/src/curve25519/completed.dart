@@ -26,5 +26,7 @@ class CompletedGroupElement {
   ExtendedGroupElement get toExtended =>
       ExtendedGroupElement(X: X * T, Y: Y * Z, Z: Z * T, T: X * Y);
 
+  CompletedGroupElement get twice => toProjective.twice;
+
   Uint8List get asBytes => toAffine.asBytes;
 }

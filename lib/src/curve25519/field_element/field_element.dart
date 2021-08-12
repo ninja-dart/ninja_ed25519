@@ -3,10 +3,14 @@ import 'dart:typed_data';
 import 'package:ninja_ed25519/src/curve25519/field_element/combine.dart';
 import 'package:ninja_ed25519/src/util/int.dart';
 
+/// FieldElement represents an element of the field GF(2^255 - 19).  An element
+/// t, entries t[0]...t[9], represents the integer t[0]+2^26 t[1]+2^51 t[2]+2^77
+/// t[3]+2^102 t[4]+...+2^230 t[9].  Bounds on each t[i] vary depending on
+/// context.
 class FieldElement {
-  final List<int> data;
-  FieldElement() : data = List<int>.filled(10, 0, growable: false);
-  const FieldElement.constant(this.data);
+  final List<int> elements;
+  FieldElement() : elements = List<int>.filled(10, 0, growable: false);
+  const FieldElement.constant(this.elements);
 
   factory FieldElement.fromList(Iterable<int> list) =>
       FieldElement()..copyFrom(list);
@@ -16,47 +20,53 @@ class FieldElement {
   static FieldElement one() => FieldElement()..[0] = 1;
 
   int operator [](int index) {
-    return data[index];
+    return elements[index];
   }
 
   void operator []=(int index, int value) {
-    data[index] = value;
+    elements[index] = value;
   }
 
-  int get length => data.length;
+  int get length => elements.length;
+  
+  void set(FieldElement other) {
+    for (int i = 0; i < elements.length; i++) {
+      elements[i] = other[i];
+    }
+  }
 
   void copyFrom(Iterable<int> src) {
-    for (int i = 0; i < data.length; i++) {
-      data[i] = src.elementAt(i);
+    for (int i = 0; i < elements.length; i++) {
+      elements[i] = src.elementAt(i);
     }
   }
 
   void copyFromBytes(Uint8List src) {
-    data[0] = load4(src.sublist(0, src.length));
-    data[1] = load3(src.sublist(4, src.length)) << 6;
-    data[2] = load3(src.sublist(7, src.length)) << 5;
-    data[3] = load3(src.sublist(10, src.length)) << 3;
-    data[4] = load3(src.sublist(13, src.length)) << 2;
-    data[5] = load4(src.sublist(16, src.length));
-    data[6] = load3(src.sublist(20, src.length)) << 7;
-    data[7] = load3(src.sublist(23, src.length)) << 5;
-    data[8] = load3(src.sublist(26, src.length)) << 4;
-    data[9] = (load3(src.sublist(29, src.length)) & 8388607) << 2;
-    combine(data);
+    elements[0] = load4(src.sublist(0, src.length));
+    elements[1] = load3(src.sublist(4, src.length)) << 6;
+    elements[2] = load3(src.sublist(7, src.length)) << 5;
+    elements[3] = load3(src.sublist(10, src.length)) << 3;
+    elements[4] = load3(src.sublist(13, src.length)) << 2;
+    elements[5] = load4(src.sublist(16, src.length));
+    elements[6] = load3(src.sublist(20, src.length)) << 7;
+    elements[7] = load3(src.sublist(23, src.length)) << 5;
+    elements[8] = load3(src.sublist(26, src.length)) << 4;
+    elements[9] = (load3(src.sublist(29, src.length)) & 8388607) << 2;
+    combine(elements);
   }
 
   FieldElement operator +(FieldElement other) {
     final dst = FieldElement();
-    for (int i = 0; i < data.length; i++) {
-      dst[i] = data[i] + other[i];
+    for (int i = 0; i < elements.length; i++) {
+      dst[i] = elements[i] + other[i];
     }
     return dst;
   }
 
   FieldElement operator -(FieldElement other) {
     final dst = FieldElement();
-    for (int i = 0; i < data.length; i++) {
-      dst[i] = data[i] - other[i];
+    for (int i = 0; i < elements.length; i++) {
+      dst[i] = elements[i] - other[i];
     }
     return dst;
   }
@@ -70,15 +80,15 @@ class FieldElement {
   ///    |h| bounded by 1.1*2^25,1.1*2^24,1.1*2^25,1.1*2^24,etc.
   FieldElement operator -() {
     final dst = FieldElement();
-    for (int i = 0; i < data.length; i++) {
-      dst[i] = -data[i];
+    for (int i = 0; i < elements.length; i++) {
+      dst[i] = -elements[i];
     }
     return dst;
   }
 
   FieldElement multiplyScalar(int other) {
     final dst = FieldElement();
-    for (int i = 0; i < data.length; i++) {
+    for (int i = 0; i < elements.length; i++) {
       dst[i] *= other;
     }
     return dst;
@@ -120,22 +130,22 @@ class FieldElement {
       return squared;
     }
 
-    var f0 = data[0];
-    var f1 = data[1];
-    var f2 = data[2];
-    var f3 = data[3];
-    var f4 = data[4];
-    var f5 = data[5];
-    var f6 = data[6];
-    var f7 = data[7];
-    var f8 = data[8];
-    var f9 = data[9];
+    var f0 = elements[0];
+    var f1 = elements[1];
+    var f2 = elements[2];
+    var f3 = elements[3];
+    var f4 = elements[4];
+    var f5 = elements[5];
+    var f6 = elements[6];
+    var f7 = elements[7];
+    var f8 = elements[8];
+    var f9 = elements[9];
 
-    var f1_2 = 2 * data[1];
-    var f3_2 = 2 * data[3];
-    var f5_2 = 2 * data[5];
-    var f7_2 = 2 * data[7];
-    var f9_2 = 2 * data[9];
+    var f1_2 = 2 * elements[1];
+    var f3_2 = 2 * elements[3];
+    var f5_2 = 2 * elements[5];
+    var f7_2 = 2 * elements[7];
+    var f9_2 = 2 * elements[9];
 
     var g0 = g[0];
     var g1 = g[1];
@@ -260,7 +270,7 @@ class FieldElement {
         f8 * g1 +
         f9 * g0;
 
-    combine(h.data);
+    combine(h.elements);
     return h;
   }
 
@@ -272,24 +282,24 @@ class FieldElement {
   /// Postconditions:
   ///    |h| bounded by 1.1*2^25,1.1*2^24,1.1*2^25,1.1*2^24,etc.
   FieldElement get squared {
-    var f0 = data[0];
-    var f1 = data[1];
-    var f2 = data[2];
-    var f3 = data[3];
-    var f4 = data[4];
-    var f5 = data[5];
-    var f6 = data[6];
-    var f7 = data[7];
-    var f8 = data[8];
-    var f9 = data[9];
-    var f0_2 = 2 * data[0];
-    var f1_2 = 2 * data[1];
-    var f2_2 = 2 * data[2];
-    var f3_2 = 2 * data[3];
-    var f4_2 = 2 * data[4];
-    var f5_2 = 2 * data[5];
-    var f6_2 = 2 * data[6];
-    var f7_2 = 2 * data[7];
+    var f0 = elements[0];
+    var f1 = elements[1];
+    var f2 = elements[2];
+    var f3 = elements[3];
+    var f4 = elements[4];
+    var f5 = elements[5];
+    var f6 = elements[6];
+    var f7 = elements[7];
+    var f8 = elements[8];
+    var f9 = elements[9];
+    var f0_2 = 2 * elements[0];
+    var f1_2 = 2 * elements[1];
+    var f2_2 = 2 * elements[2];
+    var f3_2 = 2 * elements[3];
+    var f4_2 = 2 * elements[4];
+    var f5_2 = 2 * elements[5];
+    var f6_2 = 2 * elements[6];
+    var f7_2 = 2 * elements[7];
     var f5_38 = 38 * f5; // 1.31*2^30
     var f6_19 = 19 * f6; // 1.31*2^30
     var f7_38 = 38 * f7; // 1.31*2^30
@@ -332,7 +342,7 @@ class FieldElement {
         f4 * f4 +
         f9 * f9_38;
     h[9] = f0_2 * f9 + f1_2 * f8 + f2_2 * f7 + f3_2 * f6 + f4_2 * f5;
-    combine(h.data);
+    combine(h.elements);
     return h;
   }
 
@@ -361,7 +371,7 @@ class FieldElement {
   ///   so floor(2^(-255)(h + 19 2^(-25) h9 + 2^(-1))) = q.
   Uint8List get asBytes {
     var carry = List<int>.filled(10, 0);
-    final h = data.toList(growable: false);
+    final h = elements.toList(growable: false);
 
     var q = (19 * h[9] + (1 << 24)) >> 25;
     q = (h[0] + q) >> 26;
@@ -564,4 +574,6 @@ class FieldElement {
     FieldElement out = t0 * this;
     return out;
   }
+
+  FieldElement get clone => FieldElement.fromList(elements);
 }
