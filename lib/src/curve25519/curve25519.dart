@@ -10,6 +10,7 @@ const curve25519 = Curve25519();
 
 class Curve25519 {
   const Curve25519();
+  // TODO
 
   /// computes h = a*B, where
   ///   a = a[0]+256*a[1]+...+256^31 a[31]
@@ -601,6 +602,10 @@ class Curve25519 {
     return s;
   }
 
+  ProjectiveGroupElement scalarDualMultiply() {
+    // TODO
+  }
+
   /// Input:
   ///   s[0]+256*s[1]+...+256^63*s[63] = s
   ///
@@ -926,4 +931,85 @@ class Curve25519 {
     out[31] = s11 >> 17;
     return out;
   }
+
+  /// returns true if the given scalar is less than the order of the
+  /// curve.
+  bool isLessThanOrder(Uint8List other) {
+    for(int i = 31; i >=0; i--) {
+      if(other[i] == _order[i]) {
+        continue;
+      }
+      return other[i] < _order[i];
+    }
+    return false;
+  }
+
+  /// order is the order of Curve25519 in little-endian form.
+  static final _order = Uint8List.fromList([
+    0xed,
+    0xd3,
+    0xf5,
+    0x5c,
+    0x1a,
+    0x63,
+    0x12,
+    0x58,
+    0xd6,
+    0x9c,
+    0xf7,
+    0xa2,
+    0xde,
+    0xf9,
+    0xde,
+    0x14,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x10,
+  ]);
+}
+
+Int8List _slide(Uint8List a) {
+  final r = Int8List(256);
+  for (int i = 0; i < r.length; i++) {
+    r[i] = 1 & (a[i >> 3] >> (i & 7));
+  }
+
+  for (var i = 0; i < r.length; i++) {
+    if (r[i] != 0) {
+      for (var b = 1; b <= 6 && i + b < 256; b++) {
+        if (r[i + b] != 0) {
+          if (r[i] + (r[i + b] << b) <= 15) {
+            r[i] += r[i + b] << b;
+            r[i + b] = 0;
+          } else if (r[i] - (r[i + b] << b) >= -15) {
+            r[i] -= r[i + b] << b;
+            for (var k = i + b; k < 256; k++) {
+              if (r[k] == 0) {
+                r[k] = 1;
+                break;
+              }
+              r[k] = 0;
+            }
+          } else {
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  return r;
 }
