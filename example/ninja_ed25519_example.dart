@@ -1,9 +1,14 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:ninja_ed25519/ninja_ed25519.dart';
 
 void printPubKey(String pkeyHex) {
   final k = PrivateKey.fromHex(pkeyHex);
   print(k.bytes);
   print(k.publicKey.asHex);
+  final signature = k.sign(utf8.encode('test message') as Uint8List);
+  print(signature);
 }
 
 void main() {

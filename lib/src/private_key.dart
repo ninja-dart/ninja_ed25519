@@ -32,6 +32,27 @@ class PrivateKey {
     }
     return PrivateKey(bytes);
   }
+  factory PrivateKey.fromSeed(Uint8List seed) {
+    if (seed.length != 32) {
+      throw ArgumentError('ed25519: bad seed length ${seed.length}');
+    }
+    Uint8List h = sha512.convert(seed).bytes as Uint8List;
+    var privateKey = h.sublist(0, 32);
+    privateKey[0] &= 248;
+    privateKey[31] &= 127;
+    privateKey[31] |= 64;
+    return PrivateKey(privateKey);
+  }
+  factory PrivateKey.fromBase64Seed(String seedStr) {
+    Uint8List seed = base64Decode(seedStr);
+    if (seed.length == 64) {
+      seed = seed.sublist(0, 32);
+    }
+    if(seed.length != 32) {
+      throw ArgumentError('invalid seed');
+    }
+    return PrivateKey.fromSeed(seed);
+  }
   // TODO fromBech32
 
   PublicKey? _publicKey;
@@ -59,8 +80,7 @@ class PrivateKey {
     var messageDigest = output.events.single.bytes;
 
     final Uint8List r = curve25519.reduce(messageDigest as Uint8List);
-    ExtendedGroupElement R =
-        curve25519.scalarMultiplyBase(r);
+    ExtendedGroupElement R = curve25519.scalarMultiplyBase(r);
     Uint8List encodedR = R.asBytes;
 
     output = AccumulatorSink<Digest>();
@@ -76,8 +96,8 @@ class PrivateKey {
     final Uint8List S = curve25519.scalarMultiplyAdd(kReduced, bytes, r);
 
     var signature = Uint8List(signatureSize);
-    signature.replaceRange(0, 32, encodedR);
-    signature.replaceRange(32, 64, S);
+    signature.setRange(0, 32, encodedR);
+    signature.setRange(32, 64, S);
 
     return signature;
   }
