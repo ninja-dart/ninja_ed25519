@@ -4,13 +4,13 @@ import 'package:ninja_ed25519/src/curve25519/cached.dart';
 import 'package:ninja_ed25519/src/curve25519/completed.dart';
 import 'package:ninja_ed25519/src/curve25519/extended.dart';
 import 'package:ninja_ed25519/src/curve25519/field_element/constants.dart';
+import 'package:ninja_ed25519/src/curve25519/projective.dart';
 import 'package:ninja_ed25519/src/util/int.dart';
 
 const curve25519 = Curve25519();
 
 class Curve25519 {
   const Curve25519();
-  // TODO
 
   /// computes h = a*B, where
   ///   a = a[0]+256*a[1]+...+256^31 a[31]
@@ -134,8 +134,14 @@ class Curve25519 {
     var s3 = c3 + a0 * b3 + a1 * b2 + a2 * b1 + a3 * b0;
     var s4 = c4 + a0 * b4 + a1 * b3 + a2 * b2 + a3 * b1 + a4 * b0;
     var s5 = c5 + a0 * b5 + a1 * b4 + a2 * b3 + a3 * b2 + a4 * b1 + a5 * b0;
-    var s6 =
-        c6 + a0 * b6 + a1 * b5 + a2 * b4 + a3 * b3 + a4 * b2 + a5 * b1 + a6 * b0;
+    var s6 = c6 +
+        a0 * b6 +
+        a1 * b5 +
+        a2 * b4 +
+        a3 * b3 +
+        a4 * b2 +
+        a5 * b1 +
+        a6 * b0;
     var s7 = c7 +
         a0 * b7 +
         a1 * b6 +
@@ -602,8 +608,59 @@ class Curve25519 {
     return s;
   }
 
-  ProjectiveGroupElement scalarDualMultiply() {
-    // TODO
+  /// Returns a*A + b*B
+  /// where a = a[0]+256*a[1]+...+256^31 a[31].
+  /// and b = b[0]+256*b[1]+...+256^31 b[31].
+  /// B is the Ed25519 base point (x,4/5) with x positive.
+  ProjectiveGroupElement scalarDualMultiply(
+      Uint8List a, ExtendedGroupElement A, Uint8List b) {
+    var Ai = List.generate(
+        8, (index) => CachedGroupElement()); // A,3A,5A,7A,9A,11A,13A,15A
+    int i;
+
+    final aSlide = _slide(a);
+    final bSlide = _slide(b);
+
+    Ai[0] = A.toCached;
+    CompletedGroupElement t = A.twice;
+    ExtendedGroupElement A2 = t.toExtended;
+
+    for (i = 0; i < 7; i++) {
+      t = A2 + Ai[i];
+      ExtendedGroupElement u = t.toExtended;
+      Ai[i + 1] = u.toCached;
+    }
+
+    for (i = 255; i >= 0; i--) {
+      if (aSlide[i] != 0 || bSlide[i] != 0) {
+        break;
+      }
+    }
+
+    final r = ProjectiveGroupElement();
+    for (; i >= 0; i--) {
+      t = r.twice;
+
+      if (aSlide[i] > 0) {
+        ExtendedGroupElement u = t.toExtended;
+        t = u + Ai[aSlide[i] ~/ 2];
+      } else if (aSlide[i] < 0) {
+        ExtendedGroupElement u = t.toExtended;
+        t = u - Ai[(-aSlide[i]) ~/ 2];
+      }
+
+      if (bSlide[i] > 0) {
+        ExtendedGroupElement u = t.toExtended;
+        t = u + bi[bSlide[i] ~/ 2];
+      } else if (bSlide[i] < 0) {
+        ExtendedGroupElement u = t.toExtended;
+        t = u - bi[(-bSlide[i]) ~/ 2];
+      }
+
+      r.set(t.toProjective);
+    }
+
+    return r;
   }
 
   /// Input:
@@ -935,8 +992,8 @@ class Curve25519 {
   /// returns true if the given scalar is less than the order of the
   /// curve.
   bool isLessThanOrder(Uint8List other) {
-    for(int i = 31; i >=0; i--) {
-      if(other[i] == _order[i]) {
+    for (int i = 31; i >= 0; i--) {
+      if (other[i] == _order[i]) {
         continue;
       }
       return other[i] < _order[i];

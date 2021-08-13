@@ -32,6 +32,12 @@ class ProjectiveGroupElement implements IPoint25519 {
     Z = FieldElement.one();
   }
 
+  void set(ProjectiveGroupElement other) {
+    X.set(other.X);
+    Y.set(other.Y);
+    Z.set(other.Z);
+  }
+
   @override
   Point25519 get toAffine {
     FieldElement recip = Z.inverted;
