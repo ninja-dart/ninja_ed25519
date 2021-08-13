@@ -1,7 +1,10 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:convert/convert.dart';
+import 'package:crypto/crypto.dart';
 import 'package:ninja_ed25519/src/curve25519/curve25519.dart';
+import 'package:ninja_ed25519/src/curve25519/extended.dart';
 import 'package:ninja_ed25519/src/util/hex.dart';
 
 class PrivateKey {
@@ -31,10 +34,10 @@ class PrivateKey {
   }
   // TODO fromBech32
 
-  PublicKey get publicKey {
-    final pubBytes = curve25519.scalarMultiplyBase(bytes).asBytes;
-    return PublicKey(pubBytes);
-  }
+  PublicKey? _publicKey;
+
+  PublicKey get publicKey =>
+      _publicKey ??= PublicKey(curve25519.scalarMultiplyBase(bytes).asBytes);
 
   String get asHex => bytesToHex(bytes);
   String get asBase64 => base64Encode(bytes);
@@ -47,44 +50,40 @@ class PrivateKey {
       throw ArgumentError('ed25519: bad privateKey length ${bytes.length}');
     }
 
-    /*
     var output = AccumulatorSink<Digest>();
     var input = sha512.startChunkedConversion(output);
-    input.add(digest1.sublist(32));
+    // TODO dom2
+    input.add(bytes);
     input.add(message);
     input.close();
     var messageDigest = output.events.single.bytes;
 
-    var messageDigestReduced = Uint8List(32);
-    ScReduce(messageDigestReduced, messageDigest as Uint8List);
-    var R = ExtendedGroupElement();
-    GeScalarMultBase(R, messageDigestReduced);
-
-    var encodedR = Uint8List(32);
-    R.ToBytes(encodedR);
+    final Uint8List r = curve25519.reduce(messageDigest as Uint8List);
+    ExtendedGroupElement R =
+        curve25519.scalarMultiplyBase(r);
+    Uint8List encodedR = R.asBytes;
 
     output = AccumulatorSink<Digest>();
     input = sha512.startChunkedConversion(output);
+    // TODO dom2
     input.add(encodedR);
-    input.add(privateKey.bytes.sublist(32));
+    input.add(publicKey.bytes);
     input.add(message);
     input.close();
-    var hramDigest = output.events.single.bytes;
-    var hramDigestReduced = Uint8List(32);
-    ScReduce(hramDigestReduced, hramDigest as Uint8List);
+    var k = output.events.single.bytes;
+    final kReduced = curve25519.reduce(k as Uint8List);
 
-    var s = Uint8List(32);
-    ScMulAdd(s, hramDigestReduced, expandedSecretKey as Uint8List,
-        messageDigestReduced);
+    final Uint8List S = curve25519.scalarMultiplyAdd(kReduced, bytes, r);
 
-    var signature = Uint8List(SignatureSize);
-    arrayCopy(encodedR, 0, signature, 0, 32);
-    arrayCopy(s, 0, signature, 32, 32);
+    var signature = Uint8List(signatureSize);
+    signature.replaceRange(0, 32, encodedR);
+    signature.replaceRange(32, 64, S);
 
     return signature;
-     */
-    throw UnimplementedError();
   }
+
+  final int keySize = 32;
+  final int signatureSize = 64;
 }
 
 class PublicKey {
