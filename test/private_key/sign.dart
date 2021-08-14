@@ -6,15 +6,18 @@ import 'package:test/expect.dart';
 import 'package:test/scaffolding.dart';
 
 class TestCase {
-  final Seed seed;
+  final RFC8032Seed seed;
   final Map<String, String> messages;
 
-  TestCase(String seed, this.messages) : seed = Seed.fromBase64(seed);
+  TestCase(String seed, this.messages) : seed = RFC8032Seed.fromBase64(seed);
 
   void perform() {
     for (final message in messages.keys) {
-      final sig = seed.sign(utf8.encode(message) as Uint8List);
+      final msg = utf8.encode(message) as Uint8List;
+      final sig = seed.sign(msg);
       expect(base64Encode(sig), messages[message]);
+
+      expect(seed.publicKey.verify(msg, sig), true);
     }
   }
 }
@@ -27,6 +30,9 @@ void main() {
           {
             'test message':
                 '7PpT574dtrX3ok7tXBULqE2cq6PzJP3BUYTq2VWdZ1AnEo4Le/RGlRgHqBnH1qNY7sycLkcHGUUMza7CITwzBQ==',
+            'hello':
+                'mcFLg61RbRbDBOIrM47dJBBWZhiVKjxoRV05kYVpvcN1a4b50L3r/NjWWUpACBnPZQs3ZfjaQQPSM8HdI4IyAQ==',
+            '': '0H9qYyOAazEoI5GEpQji+M0qKBOw/7UM3J2FDXJpoGNY9nYc24vavD8zkWF0OLlgM4BgrgacZ+IPwvi8wT8xBg==',
           });
       tc.perform();
     });

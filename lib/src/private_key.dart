@@ -1,20 +1,20 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:convert/convert.dart';
+import 'package:collection/equality.dart';
 import 'package:crypto/crypto.dart';
 import 'package:ninja_ed25519/src/curve25519/curve25519.dart';
 import 'package:ninja_ed25519/src/curve25519/extended.dart';
 import 'package:ninja_ed25519/src/util/hex.dart';
 
-class Seed {
+class RFC8032Seed {
   final Uint8List seed;
   final PrivateKey privateKey;
   final Uint8List prefix;
 
-  Seed(this.seed, this.privateKey, this.prefix);
+  RFC8032Seed(this.seed, this.privateKey, this.prefix);
 
-  factory Seed.fromHexSeed(String seedHex) {
+  factory RFC8032Seed.fromHexSeed(String seedHex) {
     if (seedHex.length == 128) {
       seedHex = seedHex.substring(0, 64);
     }
@@ -22,10 +22,10 @@ class Seed {
       throw ArgumentError.value(seedHex, 'hex', 'invalid key length');
     }
     final seed = hex64ToBytes(seedHex);
-    return Seed.fromSeed(seed);
+    return RFC8032Seed.fromSeed(seed);
   }
 
-  factory Seed.fromSeed(Uint8List seed) {
+  factory RFC8032Seed.fromSeed(Uint8List seed) {
     if (seed.length != 32) {
       throw ArgumentError('ed25519: bad seed length ${seed.length}');
     }
@@ -35,10 +35,10 @@ class Seed {
     privateKey[31] &= 127;
     privateKey[31] |= 64;
 
-    return Seed(seed, PrivateKey(privateKey), h.sublist(32));
+    return RFC8032Seed(seed, PrivateKey(privateKey), h.sublist(32));
   }
 
-  factory Seed.fromBase64(String seedStr) {
+  factory RFC8032Seed.fromBase64(String seedStr) {
     Uint8List seed = base64Decode(seedStr);
     if (seed.length == 64) {
       seed = seed.sublist(0, 32);
@@ -46,7 +46,7 @@ class Seed {
     if (seed.length != 32) {
       throw ArgumentError('invalid seed');
     }
-    return Seed.fromSeed(seed);
+    return RFC8032Seed.fromSeed(seed);
   }
   // TODO fromBech32
 
@@ -95,27 +95,14 @@ class PrivateKey {
       throw ArgumentError('ed25519: bad privateKey length ${keyBytes.length}');
     }
 
-    var output = AccumulatorSink<Digest>();
-    var input = sha512.startChunkedConversion(output);
-    // TODO dom2
-    input.add(prefix);
-    input.add(message);
-    input.close();
-    var messageDigest = output.events.single.bytes;
+    Uint8List messageDigest = sha512Many([prefix, message]);
 
-    final Uint8List r = curve25519.reduce(messageDigest as Uint8List);
+    final Uint8List r = curve25519.reduce(messageDigest);
     ExtendedGroupElement R = curve25519.scalarMultiplyBase(r);
     Uint8List encodedR = R.asBytes;
 
-    output = AccumulatorSink<Digest>();
-    input = sha512.startChunkedConversion(output);
-    // TODO dom2
-    input.add(encodedR);
-    input.add(publicKey.bytes);
-    input.add(message);
-    input.close();
-    var k = output.events.single.bytes;
-    final kReduced = curve25519.reduce(k as Uint8List);
+    Uint8List k = sha512Many([encodedR, publicKey.bytes, message]);
+    final kReduced = curve25519.reduce(k);
 
     final Uint8List S = curve25519.scalarMultiplyAdd(kReduced, keyBytes, r);
 
@@ -126,8 +113,8 @@ class PrivateKey {
     return signature;
   }
 
-  final int keySize = 32;
-  final int signatureSize = 64;
+  static const int keySize = 32;
+  static const int signatureSize = 64;
 }
 
 class PublicKey {
@@ -154,4 +141,59 @@ class PublicKey {
   String get asHex => bytesToHex(bytes);
   String get asBase64 => base64Encode(bytes);
   // TODO toBech32
+
+  bool verify(Uint8List message, Uint8List sig) {
+    if (sig.length != PrivateKey.signatureSize || sig[63] & 224 != 0) {
+      return false;
+    }
+
+    ExtendedGroupElement A = ExtendedGroupElement.fromBytes(bytes);
+    A.X = -A.X;
+    A.T = -A.T;
+
+    Uint8List h = sha512Many([sig.sublist(0, 32), bytes, message]);
+    final hReduced = curve25519.reduce(h);
+
+    final s = sig.sublist(32);
+    if (!curve25519.isLessThanOrder(s)) {
+      return false;
+    }
+    final R = curve25519.scalarDualMultiply(hReduced, A, s);
+    final Uint8List checkR = R.asBytes;
+    return ListEquality().equals(sig.sublist(0, 32), checkR);
+  }
+}
+
+Uint8List sha512Many(List<List<int>> messages) {
+  final output = DigestSink();
+  final input = sha512.startChunkedConversion(output);
+  for (final message in messages) {
+    input.add(message);
+  }
+  input.close();
+  return output.value.bytes as Uint8List;
+}
+
+/// A sink used to get a digest value out of `Hash.startChunkedConversion`.
+class DigestSink extends Sink<Digest> {
+  /// The value added to the sink.
+  ///
+  /// A value must have been added using [add] before reading the `value`.
+  Digest get value => _value!;
+
+  Digest? _value;
+
+  /// Adds [value] to the sink.
+  ///
+  /// Unlike most sinks, this may only be called once.
+  @override
+  void add(Digest value) {
+    if (_value != null) throw StateError('add may only be called once.');
+    _value = value;
+  }
+
+  @override
+  void close() {
+    if (_value == null) throw StateError('add must be called once.');
+  }
 }
