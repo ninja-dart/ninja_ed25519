@@ -7,32 +7,25 @@ import 'package:ninja_ed25519/src/curve25519/curve25519.dart';
 import 'package:ninja_ed25519/src/curve25519/extended.dart';
 import 'package:ninja_ed25519/src/util/hex.dart';
 
-class PrivateKey {
-  final Uint8List bytes;
+class Seed {
+  final Uint8List seed;
+  final PrivateKey privateKey;
+  final Uint8List prefix;
 
-  PrivateKey(this.bytes);
+  Seed(this.seed, this.privateKey, this.prefix);
 
-  factory PrivateKey.fromHex(String hex) {
-    if (hex.length == 128) {
-      hex = hex.substring(0, 64);
+  factory Seed.fromHexSeed(String seedHex) {
+    if (seedHex.length == 128) {
+      seedHex = seedHex.substring(0, 64);
     }
-    if (hex.length != 64) {
-      throw ArgumentError.value(hex, 'hex', 'invalid key length');
+    if (seedHex.length != 64) {
+      throw ArgumentError.value(seedHex, 'hex', 'invalid key length');
     }
-    final bytes = hex64ToBytes(hex);
-    return PrivateKey(bytes);
+    final seed = hex64ToBytes(seedHex);
+    return Seed.fromSeed(seed);
   }
-  factory PrivateKey.fromBase64(String input) {
-    Uint8List bytes = base64Decode(input);
-    if (bytes.length == 64) {
-      bytes = bytes.sublist(0, 32);
-    }
-    if (bytes.length != 32) {
-      throw ArgumentError.value(input, 'input', 'invalid key length');
-    }
-    return PrivateKey(bytes);
-  }
-  factory PrivateKey.fromSeed(Uint8List seed) {
+
+  factory Seed.fromSeed(Uint8List seed) {
     if (seed.length != 32) {
       throw ArgumentError('ed25519: bad seed length ${seed.length}');
     }
@@ -41,40 +34,71 @@ class PrivateKey {
     privateKey[0] &= 248;
     privateKey[31] &= 127;
     privateKey[31] |= 64;
-    return PrivateKey(privateKey);
+
+    return Seed(seed, PrivateKey(privateKey), h.sublist(32));
   }
-  factory PrivateKey.fromBase64Seed(String seedStr) {
+
+  factory Seed.fromBase64(String seedStr) {
     Uint8List seed = base64Decode(seedStr);
     if (seed.length == 64) {
       seed = seed.sublist(0, 32);
     }
-    if(seed.length != 32) {
+    if (seed.length != 32) {
       throw ArgumentError('invalid seed');
     }
-    return PrivateKey.fromSeed(seed);
+    return Seed.fromSeed(seed);
+  }
+  // TODO fromBech32
+
+  PublicKey get publicKey => privateKey.publicKey;
+
+  String get seedAsHex => bytesToHex(seed);
+  String get seedAsBase64 => base64Encode(seed);
+  // TODO toBech32
+
+  String get keyAsHex => privateKey.keyAsHex;
+  String get keyAsBase64 => privateKey.keyAsBase64;
+  // TODO toBech32
+
+  Uint8List sign(Uint8List message) => privateKey.sign(message, prefix);
+
+  final int keySize = 32;
+  final int signatureSize = 64;
+}
+
+class PrivateKey {
+  final Uint8List keyBytes;
+
+  PrivateKey(this.keyBytes);
+
+  factory PrivateKey.fromHex(String hex) {
+    if (hex.length != 64) {
+      throw ArgumentError.value(hex, 'hex', 'invalid key length');
+    }
+    final keyBytes = hex64ToBytes(hex);
+    return PrivateKey(keyBytes);
   }
   // TODO fromBech32
 
   PublicKey? _publicKey;
-
   PublicKey get publicKey =>
-      _publicKey ??= PublicKey(curve25519.scalarMultiplyBase(bytes).asBytes);
+      _publicKey ??= PublicKey(curve25519.scalarMultiplyBase(keyBytes).asBytes);
 
-  String get asHex => bytesToHex(bytes);
-  String get asBase64 => base64Encode(bytes);
+  String get keyAsHex => bytesToHex(keyBytes);
+  String get keyAsBase64 => base64Encode(keyBytes);
   // TODO toBech32
 
   /// Sign signs the message with privateKey and returns a signature. It will
   /// throw ArumentError if privateKey.bytes.length is not PrivateKeySize.
-  Uint8List sign(Uint8List message) {
-    if (bytes.length != 32) {
-      throw ArgumentError('ed25519: bad privateKey length ${bytes.length}');
+  Uint8List sign(Uint8List message, Uint8List prefix) {
+    if (keyBytes.length != 32) {
+      throw ArgumentError('ed25519: bad privateKey length ${keyBytes.length}');
     }
 
     var output = AccumulatorSink<Digest>();
     var input = sha512.startChunkedConversion(output);
     // TODO dom2
-    input.add(bytes);
+    input.add(prefix);
     input.add(message);
     input.close();
     var messageDigest = output.events.single.bytes;
@@ -93,7 +117,7 @@ class PrivateKey {
     var k = output.events.single.bytes;
     final kReduced = curve25519.reduce(k as Uint8List);
 
-    final Uint8List S = curve25519.scalarMultiplyAdd(kReduced, bytes, r);
+    final Uint8List S = curve25519.scalarMultiplyAdd(kReduced, keyBytes, r);
 
     var signature = Uint8List(signatureSize);
     signature.setRange(0, 32, encodedR);

@@ -42,7 +42,6 @@ var sqrtM1 = FieldElement.fromList([
   11406482,
 ]);
 
-
 /// A is a constant in the Montgomery-form of curve25519.
 var A = FieldElement.fromList([
   486662,

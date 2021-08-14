@@ -92,7 +92,7 @@ class ExtendedGroupElement implements IPoint25519, CachablePoint {
   }
 
   CompletedGroupElement operator -(Object /* CachablePoint */ other) {
-    if(other is CachablePoint) {
+    if (other is CachablePoint) {
       final q = other.toCached;
 
       final r = CompletedGroupElement();

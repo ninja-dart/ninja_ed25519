@@ -28,7 +28,7 @@ class FieldElement {
   }
 
   int get length => elements.length;
-  
+
   void set(FieldElement other) {
     for (int i = 0; i < elements.length; i++) {
       elements[i] = other[i];
@@ -348,7 +348,7 @@ class FieldElement {
 
   FieldElement get squaredMultiply2 {
     final h = _square;
-    for(int i = 0; i < h.length; i++) {
+    for (int i = 0; i < h.length; i++) {
       h[i] += h[i];
     }
     combine(h);
