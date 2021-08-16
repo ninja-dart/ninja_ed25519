@@ -1,3 +1,3 @@
 ## 1.0.0
 
-- Initial version.
++ `RFC8032Seed`, `PrivateKey` and `PublicKey`

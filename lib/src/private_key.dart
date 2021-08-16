@@ -1,11 +1,13 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:collection/equality.dart';
+import 'package:collection/collection.dart';
 import 'package:crypto/crypto.dart';
 import 'package:ninja_ed25519/src/curve25519/curve25519.dart';
 import 'package:ninja_ed25519/src/curve25519/extended.dart';
 import 'package:ninja_ed25519/src/util/hex.dart';
+
+import 'package:ninja/ninja.dart';
 
 class RFC8032Seed {
   final Uint8List seed;
@@ -172,28 +174,4 @@ Uint8List sha512Many(List<List<int>> messages) {
   }
   input.close();
   return output.value.bytes as Uint8List;
-}
-
-/// A sink used to get a digest value out of `Hash.startChunkedConversion`.
-class DigestSink extends Sink<Digest> {
-  /// The value added to the sink.
-  ///
-  /// A value must have been added using [add] before reading the `value`.
-  Digest get value => _value!;
-
-  Digest? _value;
-
-  /// Adds [value] to the sink.
-  ///
-  /// Unlike most sinks, this may only be called once.
-  @override
-  void add(Digest value) {
-    if (_value != null) throw StateError('add may only be called once.');
-    _value = value;
-  }
-
-  @override
-  void close() {
-    if (_value == null) throw StateError('add must be called once.');
-  }
 }

@@ -7,6 +7,11 @@ import 'package:ninja_ed25519/src/curve25519/field_element/constants.dart';
 import 'package:ninja_ed25519/src/curve25519/projective.dart';
 import 'package:ninja_ed25519/src/util/int.dart';
 
+export 'cached.dart';
+export 'completed.dart';
+export 'extended.dart';
+export 'projective.dart';
+
 const curve25519 = Curve25519();
 
 class Curve25519 {

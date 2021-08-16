@@ -1,6 +1,3 @@
-import 'dart:convert';
-import 'dart:typed_data';
-
 import 'package:ninja_ed25519/ninja_ed25519.dart';
 
 void printPubKey(String pkeyHex) {
