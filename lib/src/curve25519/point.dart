@@ -1,6 +1,7 @@
 import 'dart:html';
 import 'dart:typed_data';
 
+import 'package:ninja_ed25519/curve.dart';
 import 'package:ninja_ed25519/src/curve25519/extended.dart';
 import 'package:ninja_ed25519/src/curve25519/field_element/constants.dart';
 import 'package:ninja_ed25519/src/curve25519/field_element/field_element.dart';
@@ -94,22 +95,27 @@ class Point25519 implements IPoint25519 {
 
   Point25519 get clone => Point25519(x: x.clone, y: y.clone);
 
-  /*
-  Point25519 operator%() {
-    x;
+  Point25519 operator +(IPoint25519 other) {
+    final added = toExtended + other.toExtended;
+    return added.toAffine;
   }
 
-  Point25519 multiplyScalar(BigInt other, {BigInt? mod}) {
-    if(other == BigInt.zero) {
+  Point25519 operator %(BigInt mod) => Point25519(x: x % mod, y: y % mod);
+
+  Point25519 multiplyScalar(BigInt other, BigInt mod) {
+    if (other == BigInt.zero) {
       return Point25519();
     }
     BigInt mask = other;
-    Point25519 ret = clone;
-    while(mask != BigInt.zero) {
-      if(other.isOdd) {
-        ret = ret + pivot;
+    Point25519 ret = Point25519();
+    Point25519 pivot = clone;
+    while (mask != BigInt.zero) {
+      if (other.isOdd) {
+        ret = (ret + pivot) % mod;
       }
+      mask >>= 1;
+      pivot = (pivot + pivot) % mod;
     }
-    // TODO
-  }*/
+    return ret;
+  }
 }
