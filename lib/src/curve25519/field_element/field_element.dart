@@ -86,14 +86,6 @@ class FieldElement {
     return dst;
   }
 
-  FieldElement multiplyScalar(int other) {
-    final dst = FieldElement();
-    for (int i = 0; i < elements.length; i++) {
-      dst[i] *= other;
-    }
-    return dst;
-  }
-
   /// calculates h = f * g
   ///
   /// Preconditions:
@@ -121,9 +113,9 @@ class FieldElement {
   ///
   /// With tighter constraints on inputs, can squeeze carries into int32.
   FieldElement operator *(FieldElement g) {
-    if (this == g) {
+    /*if (this == g) {
       return squared;
-    }
+    }*/
 
     var f0 = elements[0];
     var f1 = elements[1];

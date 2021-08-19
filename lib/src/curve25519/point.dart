@@ -91,4 +91,25 @@ class Point25519 implements IPoint25519 {
     }
     return s;
   }
+
+  Point25519 get clone => Point25519(x: x.clone, y: y.clone);
+
+  /*
+  Point25519 operator%() {
+    x;
+  }
+
+  Point25519 multiplyScalar(BigInt other, {BigInt? mod}) {
+    if(other == BigInt.zero) {
+      return Point25519();
+    }
+    BigInt mask = other;
+    Point25519 ret = clone;
+    while(mask != BigInt.zero) {
+      if(other.isOdd) {
+        ret = ret + pivot;
+      }
+    }
+    // TODO
+  }*/
 }
