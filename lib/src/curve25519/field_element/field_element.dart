@@ -1,5 +1,7 @@
 import 'dart:typed_data';
 
+import 'package:ninja/ninja.dart';
+
 import 'package:ninja_ed25519/src/curve25519/field_element/combine.dart';
 import 'package:ninja_ed25519/src/util/int.dart';
 
@@ -17,6 +19,16 @@ class FieldElement {
 
   factory FieldElement.fromBytes(Uint8List src) =>
       FieldElement()..copyFromBytes(src);
+  factory FieldElement.fromBigInt(BigInt number) {
+    if (number.isNegative) {
+      throw ArgumentError.value(number, 'number', 'should be positive');
+    } else if (number.bitLength > 256) {
+      throw ArgumentError.value(
+          number, 'number', 'should be less than 256 bits long');
+    }
+    return FieldElement.fromBytes(
+        Uint8List.fromList(number.asBytes(outLen: 32).reversed.toList()));
+  }
   static FieldElement one() => FieldElement()..[0] = 1;
 
   int operator [](int index) {
@@ -577,4 +589,6 @@ class FieldElement {
   }
 
   FieldElement get clone => FieldElement.fromList(elements);
+
+  BigInt get asBigInt => asBytes.reversed.asBigInt;
 }

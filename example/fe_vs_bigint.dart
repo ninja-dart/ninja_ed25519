@@ -9,12 +9,14 @@ void main() {
   bytes[1] = 0x5a;
   bytes[15] = 0x5a;
   final fe = FieldElement.fromBytes(bytes);
-  final fei = fe.inverted;
-  BigInt bi = bytes.reversed.asBigInt;
-  BigInt inv = fei.asBytes.reversed.asBigInt;
+  var fei = fe.inverted;
+  BigInt bi = fe.asBigInt;
+  BigInt inv = fei.asBigInt;
   print(bi);
   print(inv);
-  print((fe * fei).asBytes.reversed.asBigInt);
+  print((fe * fei).asBigInt);
+  fei = FieldElement.fromBytes(fei.asBytes);
+  print((fe * fei).asBigInt);
 
   print(bi * inv);
 }
