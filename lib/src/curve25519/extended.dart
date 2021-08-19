@@ -20,6 +20,9 @@ class ExtendedGroupElement implements IPoint25519, CachablePoint {
         Z = Z ?? FieldElement.one(),
         T = T ?? FieldElement();
 
+  factory ExtendedGroupElement.fromHex(String hex) =>
+      Point25519.fromHex(hex).toExtended;
+
   factory ExtendedGroupElement.fromBytes(Uint8List s) =>
       Point25519.fromBytes(s).toExtended;
 

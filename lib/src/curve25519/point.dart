@@ -1,9 +1,11 @@
+import 'dart:html';
 import 'dart:typed_data';
 
 import 'package:ninja_ed25519/src/curve25519/extended.dart';
 import 'package:ninja_ed25519/src/curve25519/field_element/constants.dart';
 import 'package:ninja_ed25519/src/curve25519/field_element/field_element.dart';
 import 'package:ninja_ed25519/src/curve25519/projective.dart';
+import 'package:ninja_ed25519/src/util/hex.dart';
 
 abstract class IPoint25519 {
   Point25519 get toAffine;
@@ -18,6 +20,14 @@ class Point25519 implements IPoint25519 {
   Point25519({FieldElement? x, FieldElement? y})
       : x = x ?? FieldElement(),
         y = y ?? FieldElement.one();
+
+  factory Point25519.fromHex(String hex) {
+    if (hex.length != 64) {
+      throw ArgumentError.value(hex, 'hex', 'invalid key length');
+    }
+    final bytes = hex64ToBytes(hex);
+    return Point25519.fromBytes(bytes);
+  }
 
   factory Point25519.fromBytes(Uint8List s) {
     FieldElement tY = FieldElement.fromBytes(s);
