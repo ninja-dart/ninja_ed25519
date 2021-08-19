@@ -98,6 +98,24 @@ class FieldElement {
     return dst;
   }
 
+  FieldElement operator %(Object /* int | BigInt | FieldElement */ other) {
+    BigInt v;
+    if (other is BigInt) {
+      v = other;
+    } else if (other is FieldElement) {
+      v = other.asBigInt;
+    } else if (other is int) {
+      v = BigInt.from(other);
+    } else {
+      throw Exception('invalid type');
+    }
+    if (v.isNegative) {
+      throw Exception('cannot be negative');
+    }
+    final resInt = asBigInt % v;
+    return FieldElement.fromBigInt(resInt);
+  }
+
   /// calculates h = f * g
   ///
   /// Preconditions:
