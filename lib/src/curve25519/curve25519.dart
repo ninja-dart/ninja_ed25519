@@ -4,6 +4,7 @@ import 'package:ninja_ed25519/src/curve25519/cached.dart';
 import 'package:ninja_ed25519/src/curve25519/completed.dart';
 import 'package:ninja_ed25519/src/curve25519/extended.dart';
 import 'package:ninja_ed25519/src/curve25519/field_element/constants.dart';
+import 'package:ninja_ed25519/src/curve25519/point.dart';
 import 'package:ninja_ed25519/src/curve25519/projective.dart';
 import 'package:ninja_ed25519/src/util/int.dart';
 
@@ -16,6 +17,10 @@ const curve25519 = Curve25519();
 
 class Curve25519 {
   const Curve25519();
+
+  Point25519 scalarMultiply(BigInt scalar, IPoint25519 point) {
+    return point.toAffine.multiplyScalar(scalar, order);
+  }
 
   /// computes h = a*B, where
   ///   a = a[0]+256*a[1]+...+256^31 a[31]
@@ -1006,6 +1011,7 @@ class Curve25519 {
     return false;
   }
 
+  static final order = BigInt.parse('57896044618658097711785492504343953926634992332820282019728792003956564819949');
   /// order is the order of Curve25519 in little-endian form.
   static final _order = Uint8List.fromList([
     0xed,

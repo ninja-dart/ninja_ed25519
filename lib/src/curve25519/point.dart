@@ -1,4 +1,3 @@
-import 'dart:html';
 import 'dart:typed_data';
 
 import 'package:ninja_ed25519/curve.dart';
@@ -110,7 +109,7 @@ class Point25519 implements IPoint25519 {
     Point25519 ret = Point25519();
     Point25519 pivot = clone;
     while (mask != BigInt.zero) {
-      if (other.isOdd) {
+      if (mask.isOdd) {
         ret = (ret + pivot) % mod;
       }
       mask >>= 1;
