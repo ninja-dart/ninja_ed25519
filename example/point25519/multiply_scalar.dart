@@ -20,20 +20,26 @@ void mul1() {
   print(D.asBytes.reversed.toHex(outLen: 64));
 }
 
+final scalar = BigInt.one;
+
 void mul2() {
   final RStr =
       '396fc23bc389046b214087a9522c0fbd673d2f3f00ab9768f35fa52f953fef22';
   final R = Point25519.fromHex(RStr);
-  final R2 = R.multiplyScalar(BigInt.two, Curve25519.order);
+  final R2 = R.multiplyScalar(scalar, Curve25519.order);
   print(R2.asBytes.toHex(outLen: 64));
 }
 
 // https://crypto.stackexchange.com/questions/27392/base-point-in-ed25519
 void mul3() {
   final vUint =
-      Uint8List.fromList(BigInt.from(1).asBytes(outLen: 32).reversed.toList());
+      Uint8List.fromList(scalar.asBytes(outLen: 32).reversed.toList());
   final v = curve25519.scalarMultiplyBase(vUint);
-  print(v.asBytes.reversed.asBigInt);
+  print(v.toAffine.x.asBigInt);
+  print(v.toAffine.y.asBigInt);
+  print(v.toAffine.asCompressedIntString);
+
+
 }
 
 void main() {

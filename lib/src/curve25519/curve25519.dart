@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'package:ninja/ninja.dart';
 
 import 'package:ninja_ed25519/src/curve25519/cached.dart';
 import 'package:ninja_ed25519/src/curve25519/completed.dart';
@@ -28,11 +29,12 @@ class Curve25519 {
   ///
   /// Preconditions:
   ///   a[31] <= 127
-  ExtendedGroupElement scalarMultiplyBase(Uint8List a) {
+  ExtendedGroupElement scalarMultiplyBase(BigInt a) {
     final e = List<int>.filled(64, 0);
+    final aBytes = a.asBytes(outLen: 32).reversed.toList();
 
-    for (var i = 0; i < a.length; i++) {
-      var v = a[i];
+    for (var i = 0; i < aBytes.length; i++) {
+      var v = aBytes[i];
       e[2 * i] = v & 15;
       e[2 * i + 1] = (v >> 4) & 15;
     }
@@ -1010,6 +1012,13 @@ class Curve25519 {
     }
     return false;
   }
+
+  /// Base or generator point for RFC8032
+  static final B = Point25519.fromBigInt(
+      BigInt.parse(
+          '15112221349535400772501151409588531511454012693041857206046113283949847762202'),
+      BigInt.parse(
+          '46316835694926478169428394003475163141307993866256225615783033603165251855960'));
 
   static final order = BigInt.parse('57896044618658097711785492504343953926634992332820282019728792003956564819949');
   /// order is the order of Curve25519 in little-endian form.

@@ -17,7 +17,7 @@ class FieldElement {
   factory FieldElement.fromList(Iterable<int> list) =>
       FieldElement()..copyFrom(list);
 
-  factory FieldElement.fromBytes(Uint8List src) =>
+  factory FieldElement.fromBytes(Iterable<int> src) =>
       FieldElement()..copyFromBytes(src);
   factory FieldElement.fromBigInt(BigInt number) {
     if (number.isNegative) {
@@ -53,17 +53,17 @@ class FieldElement {
     }
   }
 
-  void copyFromBytes(Uint8List src) {
-    elements[0] = load4(src.sublist(0, src.length));
-    elements[1] = load3(src.sublist(4, src.length)) << 6;
-    elements[2] = load3(src.sublist(7, src.length)) << 5;
-    elements[3] = load3(src.sublist(10, src.length)) << 3;
-    elements[4] = load3(src.sublist(13, src.length)) << 2;
-    elements[5] = load4(src.sublist(16, src.length));
-    elements[6] = load3(src.sublist(20, src.length)) << 7;
-    elements[7] = load3(src.sublist(23, src.length)) << 5;
-    elements[8] = load3(src.sublist(26, src.length)) << 4;
-    elements[9] = (load3(src.sublist(29, src.length)) & 8388607) << 2;
+  void copyFromBytes(Iterable<int> src) {
+    elements[0] = load4(src.take(src.length));
+    elements[1] = load3(src.skip(4)) << 6;
+    elements[2] = load3(src.skip(7)) << 5;
+    elements[3] = load3(src.skip(10)) << 3;
+    elements[4] = load3(src.skip(13)) << 2;
+    elements[5] = load4(src.skip(16));
+    elements[6] = load3(src.skip(20)) << 7;
+    elements[7] = load3(src.skip(23)) << 5;
+    elements[8] = load3(src.skip(26)) << 4;
+    elements[9] = (load3(src.skip(29)) & 8388607) << 2;
     combine(elements);
   }
 

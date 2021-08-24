@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'package:ninja/ninja.dart';
 
 import 'package:ninja_ed25519/curve.dart';
 import 'package:ninja_ed25519/src/curve25519/extended.dart';
@@ -29,7 +30,7 @@ class Point25519 implements IPoint25519 {
     return Point25519.fromBytes(bytes);
   }
 
-  factory Point25519.fromBytes(Uint8List s) {
+  factory Point25519.fromBytes(Iterable<int> s) {
     FieldElement tY = FieldElement.fromBytes(s);
     FieldElement tZ = FieldElement.one();
     FieldElement u = tY.squared;
@@ -57,11 +58,24 @@ class Point25519 implements IPoint25519 {
       tX = tX * sqrtM1;
     }
 
-    if (tX.isNegative != (s[31] & 0x80 != 0)) {
+    if (tX.isNegative != (s.last & 0x80 != 0)) {
       tX = -tX;
     }
 
     return Point25519(x: tX, y: tY);
+  }
+
+  factory Point25519.fromBigInt(BigInt x, BigInt y) {
+    return Point25519(
+        x: FieldElement.fromBigInt(x), y: FieldElement.fromBigInt(y));
+  }
+
+  factory Point25519.fromCompressedBigInt(BigInt compressedBigInt) {
+    return Point25519.fromBytes(compressedBigInt.asBytes(outLen: 32).reversed);
+  }
+
+  factory Point25519.fromCompressedIntString(String compressedIntString) {
+    return Point25519.fromCompressedBigInt(BigInt.parse(compressedIntString));
   }
 
   void zero() {
@@ -91,6 +105,8 @@ class Point25519 implements IPoint25519 {
     }
     return s;
   }
+
+  String get asCompressedIntString => asBytes.reversed.asBigInt.toString();
 
   Point25519 get clone => Point25519(x: x.clone, y: y.clone);
 

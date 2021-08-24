@@ -1,18 +1,25 @@
-import 'dart:typed_data';
-
-int load3(Uint8List input) {
+int load3(Iterable<int> input) {
+  final values = input.iterator;
   int r;
-  r = input[0];
-  r |= input[1] << 8;
-  r |= input[2] << 16;
+  r = values.next;
+  r |= values.next << 8;
+  r |= values.next << 16;
   return r;
 }
 
-int load4(Uint8List input) {
+int load4(Iterable<int> input) {
+  final values = input.iterator;
   int r;
-  r = input[0];
-  r |= input[1] << 8;
-  r |= input[2] << 16;
-  r |= input[3] << 24;
+  r = values.next;
+  r |= values.next << 8;
+  r |= values.next << 16;
+  r |= values.next << 24;
   return r;
+}
+
+extension MoveNext on Iterator<int> {
+  int get next {
+    moveNext();
+    return current;
+  }
 }
