@@ -608,5 +608,8 @@ class FieldElement {
 
   FieldElement get clone => FieldElement.fromList(elements);
 
-  BigInt get asBigInt => asBytes.reversed.asBigInt;
+  BigInt get asBigInt => asBytes.asBigInt(endian: Endian.little);
+
+  @override
+  String toString() => asBigInt.toString();
 }

@@ -29,9 +29,16 @@ class Curve25519 {
   ///
   /// Preconditions:
   ///   a[31] <= 127
-  ExtendedGroupElement scalarMultiplyBase(BigInt a) {
+  ExtendedGroupElement scalarMultiplyBase(dynamic /* BigInt | List<int> */ a) {
     final e = List<int>.filled(64, 0);
-    final aBytes = a.asBytes(outLen: 32).reversed.toList();
+    List<int> aBytes;
+    if (a is BigInt) {
+      aBytes = a.asBytes(outLen: 32, endian: Endian.little);
+    } else if (a is List<int>) {
+      aBytes = a;
+    } else {
+      throw ArgumentError('a must be BigInt or List<int>');
+    }
 
     for (var i = 0; i < aBytes.length; i++) {
       var v = aBytes[i];
@@ -1020,7 +1027,9 @@ class Curve25519 {
       BigInt.parse(
           '46316835694926478169428394003475163141307993866256225615783033603165251855960'));
 
-  static final order = BigInt.parse('57896044618658097711785492504343953926634992332820282019728792003956564819949');
+  static final order = BigInt.parse(
+      '57896044618658097711785492504343953926634992332820282019728792003956564819949');
+
   /// order is the order of Curve25519 in little-endian form.
   static final _order = Uint8List.fromList([
     0xed,

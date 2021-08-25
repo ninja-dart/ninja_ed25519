@@ -71,7 +71,8 @@ class Point25519 implements IPoint25519 {
   }
 
   factory Point25519.fromCompressedBigInt(BigInt compressedBigInt) {
-    return Point25519.fromBytes(compressedBigInt.asBytes(outLen: 32).reversed);
+    return Point25519.fromBytes(
+        compressedBigInt.asBytes(outLen: 32, endian: Endian.little));
   }
 
   factory Point25519.fromCompressedIntString(String compressedIntString) {
@@ -106,7 +107,13 @@ class Point25519 implements IPoint25519 {
     return s;
   }
 
-  String get asCompressedIntString => asBytes.reversed.asBigInt.toString();
+  String get asCompressedIntString =>
+      asBytes.asBigInt().toString();
+
+  String get asCompressedHex => asBytes.toHex(outLen: 64);
+
+  @override
+  String toString() => '($x, $y)';
 
   Point25519 get clone => Point25519(x: x.clone, y: y.clone);
 
@@ -126,10 +133,10 @@ class Point25519 implements IPoint25519 {
     Point25519 pivot = clone;
     while (mask != BigInt.zero) {
       if (mask.isOdd) {
-        ret = (ret + pivot) % mod;
+        ret = (ret + pivot) /* % mod*/;
       }
       mask >>= 1;
-      pivot = (pivot + pivot) % mod;
+      pivot = (pivot + pivot) /* % mod*/;
     }
     return ret;
   }
