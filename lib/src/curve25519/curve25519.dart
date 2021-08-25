@@ -29,13 +29,14 @@ class Curve25519 {
   ///
   /// Preconditions:
   ///   a[31] <= 127
-  ExtendedGroupElement scalarMultiplyBase(dynamic /* BigInt | List<int> */ a) {
+  ExtendedGroupElement scalarMultiplyBase(dynamic /* BigInt | List<int> */ a,
+      {Endian endian: Endian.little}) {
     final e = List<int>.filled(64, 0);
     List<int> aBytes;
     if (a is BigInt) {
-      aBytes = a.asBytes(outLen: 32, endian: Endian.little);
+      aBytes = a.asBytes(outLen: 32, endian: endian);
     } else if (a is List<int>) {
-      aBytes = a;
+      aBytes = (endian == Endian.little ? a : a.reversed.toList());
     } else {
       throw ArgumentError('a must be BigInt or List<int>');
     }
@@ -1019,6 +1020,11 @@ class Curve25519 {
     }
     return false;
   }
+
+  /// Denotes the prime number defining the underlying field
+  static final p = BigInt.parse(
+      '0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffed',
+      radix: 16);
 
   /// Base or generator point for RFC8032
   static final B = Point25519.fromBigInt(

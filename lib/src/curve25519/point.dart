@@ -108,9 +108,10 @@ class Point25519 implements IPoint25519 {
   }
 
   String get asCompressedIntString =>
-      asBytes.asBigInt().toString();
+      asBytes.asBigInt(endian: Endian.little).toString();
 
-  String get asCompressedHex => asBytes.toHex(outLen: 64);
+  String get asCompressedHex =>
+      asBytes.toHex(outLen: 64, endian: Endian.little);
 
   @override
   String toString() => '($x, $y)';

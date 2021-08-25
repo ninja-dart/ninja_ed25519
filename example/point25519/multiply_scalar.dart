@@ -21,32 +21,38 @@ void mul1() {
   print(D.asBytes.reversed.toHex(outLen: 64));
 }
 
+/*
 final scalar = BigInt.parse('1', radix: 16);
+final scalarEndian = Endian.little;
+9468b7a83b937c0a438a802c841183401d690f18742cfea6b9096f865ef84e02
+ */
+
+final scalar = BigInt.parse(
+    '9468b7a83b937c0a438a802c841183401d690f18742cfea6b9096f865ef84e02',
+    radix: 16);
+final scalarEndian = Endian.big;
 
 void mul2() {
   final RStr =
       '46316835694926478169428394003475163141307993866256225615783033603165251855960';
   final R = Point25519.fromCompressedIntString(RStr);
-  final R2 = R.multiplyScalar(scalar, Curve25519.order);
+
+  BigInt tmpScalar = scalar;
+  if (scalarEndian != Endian.little) {
+    tmpScalar = scalar.asBytes(outLen: 32).reversed.asBigInt();
+  }
+
+  final R2 = R.multiplyScalar(tmpScalar, Curve25519.order);
   print('${R2.asCompressedIntString} ${R2.asCompressedHex}');
   print(R2);
 }
 
 // https://crypto.stackexchange.com/questions/27392/base-point-in-ed25519
 void mul3() {
-  final v = curve25519.scalarMultiplyBase(scalar).toAffine;
+  final v =
+      curve25519.scalarMultiplyBase(scalar, endian: scalarEndian).toAffine;
   print('${v.asCompressedIntString} ${v.asCompressedHex}');
   print(v);
-}
-
-void mul4() {
-  final RStr =
-      '46316835694926478169428394003475163141307993866256225615783033603165251855960';
-  final R = Point25519.fromCompressedIntString(RStr);
-  final R2 = R.multiplyScalar(
-      scalar & BigInt.parse('7' + 'f' * 63, radix: 16), Curve25519.order);
-  print('${R2.asCompressedIntString} ${R2.asCompressedHex}');
-  print(R2);
 }
 
 void main() {
@@ -54,11 +60,4 @@ void main() {
   mul2();
   mul3();
   // mul4();
-
-  /*print(BigInt.parse(
-          '41825278188836998301170981963750162764855116239947847220616545649677711652869') -
-      BigInt.parse(
-          '15612170286378376127611945589209810407481285339935750161844584581039806981114'));*/
-
-  // print(BigInt.parse('3bcb82eecc13739b463b386fc1ed991386a046b478bf4864673ca0a229c3cec1', radix: 16));
 }
