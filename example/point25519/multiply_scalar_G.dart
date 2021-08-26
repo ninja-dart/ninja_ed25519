@@ -1,5 +1,4 @@
 import 'package:ninja/ninja.dart';
-import 'package:ninja_ed25519/curve.dart';
 import 'package:ninja_ed25519/src/curve25519/point.dart';
 
 void main() {
