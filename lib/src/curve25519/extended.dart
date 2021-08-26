@@ -133,6 +133,5 @@ class ExtendedGroupElement implements IPoint25519, CachablePoint {
     throw ArgumentError('invalid argument');
   }
 
-  Point25519 multiplyScalar(BigInt other, BigInt mod) =>
-      toAffine.multiplyScalar(other, mod);
+  Point25519 multiplyScalar(BigInt other) => toAffine.multiplyScalar(other);
 }

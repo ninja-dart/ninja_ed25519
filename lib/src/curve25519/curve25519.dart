@@ -20,7 +20,7 @@ class Curve25519 {
   const Curve25519();
 
   Point25519 scalarMultiply(BigInt scalar, IPoint25519 point) {
-    return point.toAffine.multiplyScalar(scalar, order);
+    return point.toAffine.multiplyScalar(scalar);
   }
 
   /// computes h = a*B, where

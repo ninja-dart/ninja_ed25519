@@ -17,7 +17,7 @@ void mul1() {
       'fadf3558b700b88936113be1e5342245bd68a6b1deeb496000c4148ad4b61f02';
   final R = Point25519.fromHex(RStr);
   final a = BigInt.parse(aStr, radix: 16);
-  final D = R.multiplyScalar(a, Curve25519.order);
+  final D = R.multiplyScalar(a);
   print(D.asBytes.reversed.toHex(outLen: 64));
 }
 
@@ -42,7 +42,7 @@ void mul2() {
     tmpScalar = scalar.asBytes(outLen: 32).reversed.asBigInt();
   }
 
-  final R2 = R.multiplyScalar(tmpScalar, Curve25519.order);
+  final R2 = R.multiplyScalar(tmpScalar);
   print('${R2.asCompressedIntString} ${R2.asCompressedHex}');
   print(R2);
 }

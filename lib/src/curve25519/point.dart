@@ -125,7 +125,7 @@ class Point25519 implements IPoint25519 {
 
   Point25519 operator %(BigInt mod) => Point25519(x: x % mod, y: y % mod);
 
-  Point25519 multiplyScalar(BigInt other, BigInt mod) {
+  Point25519 multiplyScalar(BigInt other) {
     if (other == BigInt.zero) {
       return Point25519();
     }
@@ -134,10 +134,10 @@ class Point25519 implements IPoint25519 {
     Point25519 pivot = clone;
     while (mask != BigInt.zero) {
       if (mask.isOdd) {
-        ret = (ret + pivot) /* % mod*/;
+        ret = (ret + pivot);
       }
       mask >>= 1;
-      pivot = (pivot + pivot) /* % mod*/;
+      pivot = (pivot + pivot);
     }
     return ret;
   }

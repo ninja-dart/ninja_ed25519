@@ -7,6 +7,6 @@ void main() {
   final aStr = 'fadf3558b700b88936113be1e5342245bd68a6b1deeb496000c4148ad4b61f02';
   final R = Point25519.fromHex(RStr);
   final a = BigInt.parse(aStr, radix: 16);
-  final D = R.multiplyScalar(a, Curve25519.order);
+  final D = R.multiplyScalar(a);
   print(D.asBytes.toHex(outLen: 64));
 }
