@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'package:ninja/ninja.dart';
+import 'package:ninja_ed25519/curve.dart';
 
 import 'package:ninja_ed25519/src/curve25519/cached.dart';
 import 'package:ninja_ed25519/src/curve25519/completed.dart';
@@ -1021,6 +1022,9 @@ class Curve25519 {
     return false;
   }
 
+  static final G = Point25519.fromCompressedIntString(
+      '46316835694926478169428394003475163141307993866256225615783033603165251855960');
+
   /// Denotes the prime number defining the underlying field
   static final p = BigInt.parse(
       '0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffed',
@@ -1036,7 +1040,8 @@ class Curve25519 {
   /// l=2^252 + 27742317777372353535851937790883648493
   ///  =7237005577332262213973186563042994240857116359379907606001950938285454250989
   ///  =0x1000000000000000000000000000000014def9dea2f79cd65812631a5cf5d3ed
-  static final l = BigInt.parse('0x1000000000000000000000000000000014def9dea2f79cd65812631a5cf5d3ed');
+  static final l = BigInt.parse(
+      '0x1000000000000000000000000000000014def9dea2f79cd65812631a5cf5d3ed');
 
   /// Order n of RFC8032 curve25519
   /// n=2^255-19
