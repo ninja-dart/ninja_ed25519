@@ -15,6 +15,8 @@ export 'completed.dart';
 export 'extended.dart';
 export 'projective.dart';
 
+export 'scalar.dart';
+
 const curve25519 = Curve25519();
 
 class Curve25519 {
@@ -1022,13 +1024,9 @@ class Curve25519 {
     return false;
   }
 
+  /// The generator or base point of the RFC8032 25519 curve
   static final G = Point25519.fromCompressedIntString(
       '46316835694926478169428394003475163141307993866256225615783033603165251855960');
-
-  /// Denotes the prime number defining the underlying field
-  static final p = BigInt.parse(
-      '0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffed',
-      radix: 16);
 
   /// Base or generator point for RFC8032
   static final B = Point25519.fromBigInt(
@@ -1043,9 +1041,11 @@ class Curve25519 {
   static final l = BigInt.parse(
       '0x1000000000000000000000000000000014def9dea2f79cd65812631a5cf5d3ed');
 
-  /// Order n of RFC8032 curve25519
+  /// Order n of RFC8032 curve25519. Denotes the prime number defining the underlying field.
+  /// Also referred to as p.
   /// n=2^255-19
   ///  =57896044618658097711785492504343953926634992332820282019728792003956564819949
+  ///  =0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffed
   static final order = BigInt.parse(
       '57896044618658097711785492504343953926634992332820282019728792003956564819949');
 
