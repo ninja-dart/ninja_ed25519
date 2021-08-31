@@ -32,7 +32,7 @@ class Curve25519 {
   ///
   /// Preconditions:
   ///   a[31] <= 127
-  ExtendedGroupElement scalarMultiplyBase(dynamic /* BigInt | List<int> */ a,
+  Point25519 scalarMultiplyBase(dynamic /* BigInt | List<int> */ a,
       {Endian endian: Endian.little}) {
     final e = List<int>.filled(64, 0);
     List<int> aBytes;
@@ -76,7 +76,7 @@ class Curve25519 {
       h = r.toExtended;
     }
 
-    return h;
+    return h.toAffine;
   }
 
   PreComputedGroupElement _selectPoint(int pos, int b) {

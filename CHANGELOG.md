@@ -1,3 +1,8 @@
+## 1.0.2
+
++ `Scalar`
++ `Point25519.multiplyScalar`
+
 ## 1.0.1
 
 + `Point25519.fromHex` and `ExtendedGroupElement.fromHex`

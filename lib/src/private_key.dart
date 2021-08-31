@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:collection/collection.dart';
 import 'package:crypto/crypto.dart';
+import 'package:ninja_ed25519/curve.dart';
 import 'package:ninja_ed25519/src/curve25519/curve25519.dart';
 import 'package:ninja_ed25519/src/curve25519/extended.dart';
 import 'package:ninja_ed25519/src/util/hex.dart';
@@ -100,7 +101,7 @@ class PrivateKey {
     Uint8List messageDigest = sha512Many([prefix, message]);
 
     final Uint8List r = curve25519.reduce(messageDigest);
-    ExtendedGroupElement R = curve25519.scalarMultiplyBase(r);
+    Point25519 R = curve25519.scalarMultiplyBase(r);
     Uint8List encodedR = R.asBytes;
 
     Uint8List k = sha512Many([encodedR, publicKey.bytes, message]);

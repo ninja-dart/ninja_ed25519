@@ -27,8 +27,12 @@ class Scalar {
     return Scalar(value.asBytes(outLen: 32, endian: Endian.little).asBigInt());
   }
 
-  String toHex({int? outLen = 32, Endian endian = Endian.little}) =>
-      value.asBytes(outLen: 32, endian: Endian.little).toHex(endian: endian);
+  Uint8List toBytes({int? outLen = 32, Endian endian = Endian.little}) =>
+      value.asBytes(outLen: 32, endian: endian);
+
+  String toHex({int? outLen = 64, Endian endian = Endian.little}) => value
+      .asBytes(outLen: 32, endian: Endian.little)
+      .toHex(endian: endian, outLen: outLen);
 
   String toIntString({Endian endian = Endian.little}) {
     return value
