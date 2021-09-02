@@ -87,6 +87,7 @@ class PrivateKey {
   PublicKey get publicKey =>
       _publicKey ??= PublicKey(curve25519.scalarMultiplyBase(keyBytes).asBytes);
 
+  BigInt get keyAsBigInt => keyBytes.asBigInt(endian: Endian.little);
   String get keyAsHex => bytesToHex(keyBytes);
   String get keyAsBase64 => base64Encode(keyBytes);
   // TODO toBech32
@@ -141,6 +142,8 @@ class PublicKey {
   }
   // TODO fromBech32
 
+  BigInt get asBigInt => bytes.asBigInt(endian: Endian.little);
+  Point25519 get asPoint => Point25519.fromBytes(bytes);
   String get asHex => bytesToHex(bytes);
   String get asBase64 => base64Encode(bytes);
   // TODO toBech32
