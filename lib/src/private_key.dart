@@ -19,15 +19,34 @@ class RFC8032Seed {
   RFC8032Seed(this.seed, this.privateKey, this.prefix);
 
   factory RFC8032Seed.fromHexSeed(String seedHex) {
-    if (seedHex.length == 128) {
-      seedHex = seedHex.substring(0, 64);
-    }
     if (seedHex.length != 64) {
       throw ArgumentError.value(seedHex, 'hex', 'invalid key length');
     }
     final seed = hex64ToBytes(seedHex);
     return RFC8032Seed.fromSeed(seed);
   }
+
+  factory RFC8032Seed.fromSeed(Uint8List seed) {
+    if (seed.length != 32) {
+      throw ArgumentError('ed25519: bad seed length ${seed.length}');
+    }
+    Uint8List h = sha512.convert(seed).bytes as Uint8List;
+    var privateKey = h.sublist(0, 32);
+    privateKey[0] &= 248;
+    privateKey[31] &= 127;
+    privateKey[31] |= 64;
+
+    return RFC8032Seed(seed, PrivateKey(privateKey), h.sublist(32));
+  }
+
+  factory RFC8032Seed.fromBase64Seed(String seedStr) {
+    Uint8List seed = base64Decode(seedStr);
+    if (seed.length != 32) {
+      throw ArgumentError('invalid seed');
+    }
+    return RFC8032Seed.fromSeed(seed);
+  }
+  // TODO fromBech32Seed
 
   factory RFC8032Seed.fromHex(String hex) {
     if (hex.length != 128) {
@@ -46,35 +65,10 @@ class RFC8032Seed {
         null, PrivateKey(bytes.sublist(0, 32)), bytes.sublist(32));
   }
 
-  factory RFC8032Seed.fromSeed(Uint8List seed) {
-    if (seed.length != 32) {
-      throw ArgumentError('ed25519: bad seed length ${seed.length}');
-    }
-    Uint8List h = sha512.convert(seed).bytes as Uint8List;
-    var privateKey = h.sublist(0, 32);
-    privateKey[0] &= 248;
-    privateKey[31] &= 127;
-    privateKey[31] |= 64;
-
-    return RFC8032Seed(seed, PrivateKey(privateKey), h.sublist(32));
-  }
-
   factory RFC8032Seed.fromBase64(String input) {
     Uint8List bytes = base64Decode(input);
     return RFC8032Seed.fromBytes(bytes);
   }
-
-  factory RFC8032Seed.fromBase64Seed(String seedStr) {
-    Uint8List seed = base64Decode(seedStr);
-    if (seed.length == 64) {
-      seed = seed.sublist(0, 32);
-    }
-    if (seed.length != 32) {
-      throw ArgumentError('invalid seed');
-    }
-    return RFC8032Seed.fromSeed(seed);
-  }
-  // TODO fromBech32
 
   PublicKey get publicKey => privateKey.publicKey;
 

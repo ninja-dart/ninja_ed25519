@@ -33,7 +33,7 @@ class Curve25519 {
   /// Preconditions:
   ///   a[31] <= 127
   Point25519 scalarMultiplyBase(dynamic /* BigInt | List<int> */ a,
-      {Endian endian: Endian.little}) {
+      {Endian endian = Endian.little}) {
     final e = List<int>.filled(64, 0);
     List<int> aBytes;
     if (a is BigInt) {
