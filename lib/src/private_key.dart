@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import 'package:ninja_hex/ninja_hex.dart';
 
 import 'package:collection/collection.dart';
 import 'package:crypto/crypto.dart';
@@ -11,7 +12,7 @@ import 'package:ninja_ed25519/src/util/hex.dart';
 import 'package:ninja/ninja.dart';
 
 class RFC8032Seed {
-  final Uint8List seed;
+  final Uint8List? seed;
   final PrivateKey privateKey;
   final Uint8List prefix;
 
@@ -28,6 +29,23 @@ class RFC8032Seed {
     return RFC8032Seed.fromSeed(seed);
   }
 
+  factory RFC8032Seed.fromHex(String hex) {
+    if (hex.length != 128) {
+      throw ArgumentError.value(hex, 'seedHex', 'invalid length');
+    }
+    final seed = hexDecode(hex);
+    return RFC8032Seed.fromBytes(seed);
+  }
+
+  factory RFC8032Seed.fromBytes(Uint8List bytes) {
+    if (bytes.length != 64) {
+      throw ArgumentError.value(bytes, 'bytes', 'invalid length');
+    }
+
+    return RFC8032Seed(
+        null, PrivateKey(bytes.sublist(0, 32)), bytes.sublist(32));
+  }
+
   factory RFC8032Seed.fromSeed(Uint8List seed) {
     if (seed.length != 32) {
       throw ArgumentError('ed25519: bad seed length ${seed.length}');
@@ -41,7 +59,12 @@ class RFC8032Seed {
     return RFC8032Seed(seed, PrivateKey(privateKey), h.sublist(32));
   }
 
-  factory RFC8032Seed.fromBase64(String seedStr) {
+  factory RFC8032Seed.fromBase64(String input) {
+    Uint8List bytes = base64Decode(input);
+    return RFC8032Seed.fromBytes(bytes);
+  }
+
+  factory RFC8032Seed.fromBase64Seed(String seedStr) {
     Uint8List seed = base64Decode(seedStr);
     if (seed.length == 64) {
       seed = seed.sublist(0, 32);
@@ -55,8 +78,8 @@ class RFC8032Seed {
 
   PublicKey get publicKey => privateKey.publicKey;
 
-  String get seedAsHex => bytesToHex(seed);
-  String get seedAsBase64 => base64Encode(seed);
+  String? get seedAsHex => seed != null? bytesToHex(seed!): null;
+  String? get seedAsBase64 => seed != null? base64Encode(seed!): null;
   // TODO toBech32
 
   String get keyAsHex => privateKey.keyAsHex;
