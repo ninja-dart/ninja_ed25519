@@ -1,6 +1,7 @@
 ## 1.0.3
 
 + `RFC8032Seed.fromBech32`
++ Fixed `RFC8032 constructors`
 
 ## 1.0.2
 
