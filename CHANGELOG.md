@@ -1,3 +1,7 @@
+## 1.0.3
+
++ `RFC8032Seed.fromBech32`
+
 ## 1.0.2
 
 + `Scalar`

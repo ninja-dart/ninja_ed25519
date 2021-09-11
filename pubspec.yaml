@@ -10,7 +10,9 @@ dependencies:
   crypto: ^3.0.1
   collection: ^1.15.0
   ninja: ^3.0.7
+  ninja_basex: ^1.0.3
+  bech32: ^0.2.1
 
 dev_dependencies:
   pedantic: ^1.11.1
-  test: ^1.17.11
+  test: ^1.17.12

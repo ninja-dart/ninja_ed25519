@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import 'package:ninja_basex/ninja_basex.dart';
 import 'package:ninja_hex/ninja_hex.dart';
 
 import 'package:collection/collection.dart';
@@ -8,6 +9,7 @@ import 'package:ninja_ed25519/curve.dart';
 import 'package:ninja_ed25519/src/curve25519/curve25519.dart';
 import 'package:ninja_ed25519/src/curve25519/extended.dart';
 import 'package:ninja_ed25519/src/util/hex.dart';
+import 'package:bech32/bech32.dart';
 
 import 'package:ninja/ninja.dart';
 
@@ -70,10 +72,20 @@ class RFC8032Seed {
     return RFC8032Seed.fromBytes(bytes);
   }
 
+  factory RFC8032Seed.fromBech32(String key) {
+    final bech = bech32.decode(key, 200);
+    var data = fromBaseBytes(bech.data, 32);
+    if(data.length < 64) {
+      throw Exception('invalid data in bech32 encoded input');
+    }
+    data = data.sublist(0, 64);
+    return RFC8032Seed.fromBytes(Uint8List.fromList(data));
+  }
+
   PublicKey get publicKey => privateKey.publicKey;
 
-  String? get seedAsHex => seed != null? bytesToHex(seed!): null;
-  String? get seedAsBase64 => seed != null? base64Encode(seed!): null;
+  String? get seedAsHex => seed != null ? bytesToHex(seed!) : null;
+  String? get seedAsBase64 => seed != null ? base64Encode(seed!) : null;
   // TODO toBech32
 
   String get keyAsHex => privateKey.keyAsHex;
