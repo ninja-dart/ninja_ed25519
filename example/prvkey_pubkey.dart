@@ -1,9 +1,12 @@
+import 'dart:typed_data';
+
+import 'package:ninja_ed25519/curve.dart';
 import 'package:ninja_ed25519/ninja_ed25519.dart';
 
 void printPubKey(String pkeyHex) {
-  final k = PrivateKey.fromHex(pkeyHex);
-  print(k.keyBytes);
-  print(k.publicKey.asHex);
+  final k = Scalar.fromString(pkeyHex, radix: 16, endian: Endian.big);
+  print(k.toBytes());
+  print(k.multiplyBase().asCompressedHex());
 }
 
 void main() {

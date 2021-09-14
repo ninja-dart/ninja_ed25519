@@ -15,7 +15,7 @@ import 'package:ninja/ninja.dart';
 
 class RFC8032Seed {
   final Uint8List? seed;
-  final PrivateKey privateKey;
+  final Uint8List privateKey;
   final Uint8List prefix;
 
   RFC8032Seed(this.seed, this.privateKey, this.prefix);
@@ -38,7 +38,7 @@ class RFC8032Seed {
     privateKey[31] &= 127;
     privateKey[31] |= 64;
 
-    return RFC8032Seed(seed, PrivateKey(privateKey), h.sublist(32));
+    return RFC8032Seed(seed, privateKey, h.sublist(32));
   }
 
   factory RFC8032Seed.fromBase64Seed(String seedStr) {
@@ -64,7 +64,7 @@ class RFC8032Seed {
     }
 
     return RFC8032Seed(
-        null, PrivateKey(bytes.sublist(0, 32)), bytes.sublist(32));
+        null, bytes.sublist(0, 32), bytes.sublist(32));
   }
 
   factory RFC8032Seed.fromBase64(String input) {
@@ -82,52 +82,21 @@ class RFC8032Seed {
     return RFC8032Seed.fromBytes(Uint8List.fromList(data));
   }
 
-  PublicKey get publicKey => privateKey.publicKey;
+  PublicKey get publicKey => PublicKey(curve25519.scalarMultiplyBase(privateKey).asBytes);
 
   String? get seedAsHex => seed != null ? bytesToHex(seed!) : null;
   String? get seedAsBase64 => seed != null ? base64Encode(seed!) : null;
   // TODO toBech32
 
-  String get keyAsHex => privateKey.keyAsHex;
-  String get keyAsBase64 => privateKey.keyAsBase64;
+  BigInt get keyAsBigInt => privateKey.asBigInt(endian: Endian.little);
+  String get keyAsHex => bytesToHex(privateKey);
+  String get keyAsBase64 => base64Encode(privateKey);
   // TODO toBech32
 
-  Uint8List sign(Uint8List message) => privateKey.sign(message, prefix);
-
-  final int keySize = 32;
-  final int signatureSize = 64;
-}
-
-class PrivateKey {
-  final Uint8List keyBytes;
-
-  PrivateKey(this.keyBytes);
-
-  factory PrivateKey.fromHex(String hex) {
-    if (hex.length != 64) {
-      throw ArgumentError.value(hex, 'hex', 'invalid key length');
-    }
-    final keyBytes = hex64ToBytes(hex);
-    return PrivateKey(keyBytes);
-  }
-  // TODO fromBech32
-
-  PublicKey? _publicKey;
-  PublicKey get publicKey =>
-      _publicKey ??= PublicKey(curve25519.scalarMultiplyBase(keyBytes).asBytes);
-
-  BigInt get keyAsBigInt => keyBytes.asBigInt(endian: Endian.little);
-  String get keyAsHex => bytesToHex(keyBytes);
-  String get keyAsBase64 => base64Encode(keyBytes);
-  // TODO toBech32
 
   /// Sign signs the message with privateKey and returns a signature. It will
   /// throw ArumentError if privateKey.bytes.length is not PrivateKeySize.
-  Uint8List sign(Uint8List message, Uint8List prefix) {
-    if (keyBytes.length != 32) {
-      throw ArgumentError('ed25519: bad privateKey length ${keyBytes.length}');
-    }
-
+  Uint8List sign(Uint8List message) {
     Uint8List messageDigest = sha512Many([prefix, message]);
 
     final Uint8List r = curve25519.reduce(messageDigest);
@@ -137,7 +106,7 @@ class PrivateKey {
     Uint8List k = sha512Many([encodedR, publicKey.bytes, message]);
     final kReduced = curve25519.reduce(k);
 
-    final Uint8List S = curve25519.scalarMultiplyAdd(kReduced, keyBytes, r);
+    final Uint8List S = curve25519.scalarMultiplyAdd(kReduced, privateKey, r);
 
     var signature = Uint8List(signatureSize);
     signature.setRange(0, 32, encodedR);
@@ -178,7 +147,7 @@ class PublicKey {
   // TODO toBech32
 
   bool verify(Uint8List message, Uint8List sig) {
-    if (sig.length != PrivateKey.signatureSize || sig[63] & 224 != 0) {
+    if (sig.length != RFC8032Seed.signatureSize || sig[63] & 224 != 0) {
       return false;
     }
 

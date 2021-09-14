@@ -1,6 +1,9 @@
 import 'package:ninja/ninja.dart';
 import 'dart:typed_data';
 
+import 'package:ninja_ed25519/curve.dart';
+import 'package:ninja_ed25519/ninja_ed25519.dart';
+
 class Scalar {
   BigInt value;
 
@@ -26,6 +29,13 @@ class Scalar {
   factory Scalar.fromBigEndian(BigInt value) {
     return Scalar(value.asBytes(outLen: 32, endian: Endian.little).asBigInt());
   }
+
+  PublicKey toPublicKey() => PublicKey(multiplyBase().asBytes);
+
+  Point25519 multiplyBase() =>
+      curve25519.scalarMultiplyBase(value, endian: Endian.little);
+
+  Point25519 multiplyPoint(Point25519 point) => point.multiplyScalar(value);
 
   Uint8List toBytes({int? outLen = 32, Endian endian = Endian.little}) =>
       value.asBytes(outLen: 32, endian: endian);

@@ -1,12 +1,17 @@
+import 'dart:typed_data';
+
+import 'package:ninja_ed25519/curve.dart';
 import 'package:ninja_ed25519/ninja_ed25519.dart';
 import 'package:test/test.dart';
 
 void main() {
   group('PrivateKey', () {
     test('FromHex', () {
-      final k = PrivateKey.fromHex(
-          '96d54cd4f1d71e10a1eb76125aad65219cded6a987fd0b6cc1f758417b99d20c');
-      expect(k.keyBytes, [
+      final k = Scalar.fromString(
+          '96d54cd4f1d71e10a1eb76125aad65219cded6a987fd0b6cc1f758417b99d20c',
+          radix: 16,
+          endian: Endian.big);
+      expect(k.toBytes(), [
         150,
         213,
         76,
