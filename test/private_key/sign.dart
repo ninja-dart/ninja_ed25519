@@ -6,18 +6,18 @@ import 'package:test/expect.dart';
 import 'package:test/scaffolding.dart';
 
 class TestCase {
-  final RFC8032Seed seed;
+  final PrivateKey prvKey;
   final Map<String, String> messages;
 
-  TestCase(String seed, this.messages) : seed = RFC8032Seed.fromBase64(seed);
+  TestCase(String seed, this.messages) : prvKey = PrivateKey.fromBase64(seed);
 
   void perform() {
     for (final message in messages.keys) {
       final msg = utf8.encode(message) as Uint8List;
-      final sig = seed.sign(msg);
+      final sig = prvKey.sign(msg);
       expect(base64Encode(sig), messages[message]);
 
-      expect(seed.publicKey.verify(msg, sig), true);
+      expect(prvKey.publicKey.verify(msg, sig), true);
     }
   }
 }

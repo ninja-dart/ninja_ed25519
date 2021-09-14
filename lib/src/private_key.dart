@@ -13,22 +13,22 @@ import 'package:bech32/bech32.dart';
 
 import 'package:ninja/ninja.dart';
 
-class RFC8032Seed {
+class PrivateKey {
   final Uint8List? seed;
   final Uint8List privateKey;
   final Uint8List prefix;
 
-  RFC8032Seed(this.seed, this.privateKey, this.prefix);
+  PrivateKey(this.seed, this.privateKey, this.prefix);
 
-  factory RFC8032Seed.fromHexSeed(String seedHex) {
+  factory PrivateKey.fromHexSeed(String seedHex) {
     if (seedHex.length != 64) {
       throw ArgumentError.value(seedHex, 'hex', 'invalid key length');
     }
     final seed = hex64ToBytes(seedHex);
-    return RFC8032Seed.fromSeed(seed);
+    return PrivateKey.fromSeed(seed);
   }
 
-  factory RFC8032Seed.fromSeed(Uint8List seed) {
+  factory PrivateKey.fromSeed(Uint8List seed) {
     if (seed.length != 32) {
       throw ArgumentError('ed25519: bad seed length ${seed.length}');
     }
@@ -38,48 +38,48 @@ class RFC8032Seed {
     privateKey[31] &= 127;
     privateKey[31] |= 64;
 
-    return RFC8032Seed(seed, privateKey, h.sublist(32));
+    return PrivateKey(seed, privateKey, h.sublist(32));
   }
 
-  factory RFC8032Seed.fromBase64Seed(String seedStr) {
+  factory PrivateKey.fromBase64Seed(String seedStr) {
     Uint8List seed = base64Decode(seedStr);
     if (seed.length != 32) {
       throw ArgumentError('invalid seed');
     }
-    return RFC8032Seed.fromSeed(seed);
+    return PrivateKey.fromSeed(seed);
   }
   // TODO fromBech32Seed
 
-  factory RFC8032Seed.fromHex(String hex) {
+  factory PrivateKey.fromHex(String hex) {
     if (hex.length != 128) {
       throw ArgumentError.value(hex, 'seedHex', 'invalid length');
     }
     final seed = hexDecode(hex);
-    return RFC8032Seed.fromBytes(seed);
+    return PrivateKey.fromBytes(seed);
   }
 
-  factory RFC8032Seed.fromBytes(Uint8List bytes) {
+  factory PrivateKey.fromBytes(Uint8List bytes) {
     if (bytes.length != 64) {
       throw ArgumentError.value(bytes, 'bytes', 'invalid length');
     }
 
-    return RFC8032Seed(
+    return PrivateKey(
         null, bytes.sublist(0, 32), bytes.sublist(32));
   }
 
-  factory RFC8032Seed.fromBase64(String input) {
+  factory PrivateKey.fromBase64(String input) {
     Uint8List bytes = base64Decode(input);
-    return RFC8032Seed.fromBytes(bytes);
+    return PrivateKey.fromBytes(bytes);
   }
 
-  factory RFC8032Seed.fromBech32(String key) {
+  factory PrivateKey.fromBech32(String key) {
     final bech = bech32.decode(key, 200);
     var data = fromBaseBytes(bech.data, 32);
     if(data.length < 64) {
       throw Exception('invalid data in bech32 encoded input');
     }
     data = data.sublist(0, 64);
-    return RFC8032Seed.fromBytes(Uint8List.fromList(data));
+    return PrivateKey.fromBytes(Uint8List.fromList(data));
   }
 
   PublicKey get publicKey => PublicKey(curve25519.scalarMultiplyBase(privateKey).asBytes);
@@ -147,7 +147,7 @@ class PublicKey {
   // TODO toBech32
 
   bool verify(Uint8List message, Uint8List sig) {
-    if (sig.length != RFC8032Seed.signatureSize || sig[63] & 224 != 0) {
+    if (sig.length != PrivateKey.signatureSize || sig[63] & 224 != 0) {
       return false;
     }
 
