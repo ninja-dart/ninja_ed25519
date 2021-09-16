@@ -48,7 +48,6 @@ class PrivateKey {
     }
     return PrivateKey.fromSeed(seed);
   }
-  // TODO fromBech32Seed
 
   factory PrivateKey.fromHex(String hex) {
     if (hex.length != 128) {
@@ -63,8 +62,7 @@ class PrivateKey {
       throw ArgumentError.value(bytes, 'bytes', 'invalid length');
     }
 
-    return PrivateKey(
-        null, bytes.sublist(0, 32), bytes.sublist(32));
+    return PrivateKey(null, bytes.sublist(0, 32), bytes.sublist(32));
   }
 
   factory PrivateKey.fromBase64(String input) {
@@ -75,27 +73,31 @@ class PrivateKey {
   factory PrivateKey.fromBech32(String key) {
     final bech = bech32.decode(key, 200);
     var data = fromBaseBytes(bech.data, 32);
-    if(data.length < 64) {
+    if (data.length < 64) {
       throw Exception('invalid data in bech32 encoded input');
     }
     data = data.sublist(0, 64);
     return PrivateKey.fromBytes(Uint8List.fromList(data));
   }
 
-  PublicKey get publicKey => PublicKey(curve25519.scalarMultiplyBase(privateKey).asBytes);
+  PublicKey get publicKey =>
+      PublicKey(curve25519.scalarMultiplyBase(privateKey).asBytes);
 
   String? get seedAsHex => seed != null ? bytesToHex(seed!) : null;
   String? get seedAsBase64 => seed != null ? base64Encode(seed!) : null;
-  // TODO toBech32
 
   BigInt get keyAsBigInt => privateKey.asBigInt(endian: Endian.little);
   String get keyAsHex => bytesToHex(privateKey);
   String get keyAsBase64 => base64Encode(privateKey);
-  // TODO toBech32
 
+  String toBech32(String hrp) {
+    final bechData = Bech32(
+        hrp, List<int>.filled(64, 0)..addAll(privateKey)..addAll(prefix));
+    return bech32.encode(bechData, 200);
+  }
 
   /// Sign signs the message with privateKey and returns a signature. It will
-  /// throw ArumentError if privateKey.bytes.length is not PrivateKeySize.
+  /// throw ArgumentError if privateKey.bytes.length is not PrivateKeySize.
   Uint8List sign(Uint8List message) {
     Uint8List messageDigest = sha512Many([prefix, message]);
 
@@ -138,13 +140,25 @@ class PublicKey {
     }
     return PublicKey(bytes);
   }
-  // TODO fromBech32
+  factory PublicKey.fromBech32(String key) {
+    final bech = bech32.decode(key);
+    var data = fromBaseBytes(bech.data, 32);
+    if (data.length != 32) {
+      throw Exception('invalid data in bech32 encoded input');
+    }
+    return PublicKey(Uint8List.fromList(data));
+  }
 
   BigInt get asBigInt => bytes.asBigInt(endian: Endian.little);
   Point25519 get asPoint => Point25519.fromBytes(bytes);
   String get asHex => bytesToHex(bytes);
   String get asBase64 => base64Encode(bytes);
   // TODO toBech32
+
+  String toBech32(String hrp) {
+    final bechData = Bech32(hrp, List<int>.filled(32, 0)..addAll(bytes));
+    return bech32.encode(bechData, 200);
+  }
 
   bool verify(Uint8List message, Uint8List sig) {
     if (sig.length != PrivateKey.signatureSize || sig[63] & 224 != 0) {
