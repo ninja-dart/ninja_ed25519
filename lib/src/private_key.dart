@@ -153,7 +153,6 @@ class PublicKey {
   Point25519 get asPoint => Point25519.fromBytes(bytes);
   String get asHex => bytesToHex(bytes);
   String get asBase64 => base64Encode(bytes);
-  // TODO toBech32
 
   String toBech32(String hrp) {
     final bechData = Bech32(hrp, List<int>.filled(32, 0)..addAll(bytes));
