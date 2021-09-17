@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
-import 'package:ninja_basex/ninja_basex.dart';
+import 'package:ninja_ed25519/src/util/encodeBech32.dart';
 import 'package:ninja_hex/ninja_hex.dart';
 
 import 'package:collection/collection.dart';
@@ -9,7 +9,6 @@ import 'package:ninja_ed25519/curve.dart';
 import 'package:ninja_ed25519/src/curve25519/curve25519.dart';
 import 'package:ninja_ed25519/src/curve25519/extended.dart';
 import 'package:ninja_ed25519/src/util/hex.dart';
-import 'package:bech32/bech32.dart';
 
 import 'package:ninja/ninja.dart';
 
@@ -71,8 +70,7 @@ class PrivateKey {
   }
 
   factory PrivateKey.fromBech32(String key) {
-    final bech = bech32.decode(key, 200);
-    var data = fromBaseBytes(bech.data, 32);
+    List<int> data = decodeBech32(key, maxBechLength: 200);
     if (data.length < 64) {
       throw Exception('invalid data in bech32 encoded input');
     }
@@ -91,9 +89,10 @@ class PrivateKey {
   String get keyAsBase64 => base64Encode(privateKey);
 
   String toBech32(String hrp) {
-    final bechData = Bech32(
-        hrp, List<int>.filled(64, 0)..addAll(privateKey)..addAll(prefix));
-    return bech32.encode(bechData, 200);
+    final bechBytes = List<int>.filled(64, 0)
+      ..setRange(0, 32, privateKey)
+      ..setRange(32, 64, prefix);
+    return encodeBech32(hrp, bechBytes, maxBechLength: 200);
   }
 
   /// Sign signs the message with privateKey and returns a signature. It will
@@ -141,8 +140,7 @@ class PublicKey {
     return PublicKey(bytes);
   }
   factory PublicKey.fromBech32(String key) {
-    final bech = bech32.decode(key);
-    var data = fromBaseBytes(bech.data, 32);
+    List<int> data = decodeBech32(key, maxBechLength: 32);
     if (data.length != 32) {
       throw Exception('invalid data in bech32 encoded input');
     }
@@ -155,8 +153,8 @@ class PublicKey {
   String get asBase64 => base64Encode(bytes);
 
   String toBech32(String hrp) {
-    final bechData = Bech32(hrp, List<int>.filled(32, 0)..addAll(bytes));
-    return bech32.encode(bechData, 200);
+    final bechBytes = List<int>.filled(32, 0)..setRange(0, 32, bytes);
+    return encodeBech32(hrp, bechBytes, maxBechLength: 200);
   }
 
   bool verify(Uint8List message, Uint8List sig) {
